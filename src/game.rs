@@ -1,3 +1,8 @@
+use serde::{Deserialize, Serialize};
+use ts_rs::TS;
+
+use crate::room::Room;
+
 #[derive(Copy, Clone, Debug, PartialEq, TS, Serialize, Deserialize)]
 #[ts(export)]
 pub enum Color {
@@ -5,6 +10,7 @@ pub enum Color {
     Green,
     Blue,
     Yellow,
+    None,
 }
 
 #[derive(Copy, Clone, Debug, PartialEq, TS, Serialize, Deserialize)]
@@ -32,11 +38,6 @@ pub enum CardKind {
     Special(SpecialCardKind),
 }
 
-use serde::{Deserialize, Serialize};
-use ts_rs::TS;
-
-use crate::room::{self, Room};
-
 #[derive(TS, Clone, Debug, Serialize, Deserialize)]
 #[ts(export)]
 pub struct Card {
@@ -46,13 +47,24 @@ pub struct Card {
 pub struct State {
     pub played_cards: Vec<Card>,
     pub unplayed_cards: Vec<Card>,
-    turn_direction: TurnDirection,
-    skip_next: bool,
+    pub turn_direction: TurnDirection,
+    skip_next: usize,
+    give_next: usize,
     pub turn_index: usize,
 }
-enum TurnDirection {
+
+#[derive(TS,Clone, Copy, Serialize, Debug)]
+pub enum TurnDirection {
     Clockwise,
     CounterClockwise,
+}
+impl TurnDirection {
+    fn flip(&self) -> Self {
+        match self {
+            TurnDirection::Clockwise => TurnDirection::CounterClockwise,
+            TurnDirection::CounterClockwise => TurnDirection::Clockwise,
+        }
+    }
 }
 
 #[derive(Debug)]
@@ -65,38 +77,55 @@ pub struct Player {
 const COLORS: [Color; 4] = [Color::Red, Color::Green, Color::Yellow, Color::Blue];
 
 impl State {
-    //This is an abomination
-    pub fn next_turn(&mut self, room: &Room) {
-        if self.skip_next {
-            self.skip_next = false;
-            self.next_turn(room);
-        }
-        match self.turn_direction {
-            TurnDirection::Clockwise => {
-                if self.turn_index == 0 {
-                    self.turn_index = room.players.len();
-                };
-                self.turn_index -= 1
-            }
-            TurnDirection::CounterClockwise => {
-                self.turn_index += 1;
-                if self.turn_index >= room.players.len() {
-                    self.turn_index = 0;
+    pub fn next_turn(&mut self, room: &mut Room) {
+        for _ in 0..=self.skip_next {
+            match self.turn_direction {
+                TurnDirection::Clockwise => {
+                    if self.turn_index == 0 {
+                        self.turn_index = room.players.len();
+                    };
+                    self.turn_index -= 1
+                }
+                TurnDirection::CounterClockwise => {
+                    self.turn_index += 1;
+                    if self.turn_index >= room.players.len() {
+                        self.turn_index = 0;
+                    }
                 }
             }
         }
+        if self.give_next > 0 {
+            let Some((_, player)) = room.players.get_index_mut(self.turn_index) else {
+                return;
+            };
+            player.cards.extend(
+                self.unplayed_cards
+                    .drain(self.unplayed_cards.len() - self.give_next..),
+            )
+        }
+        self.skip_next = 0;
+        self.give_next = 0;
     }
-    pub fn play_card(&mut self, room: &mut Room, card: Card) {
+    pub fn place_card(&mut self, card: Card) {
         match card.kind {
             CardKind::Normal(k) => match k {
-                NormalCardKind::Block => self.skip_next = true,
-                _ => (),
+                NormalCardKind::Block => self.skip_next += 1,
+                NormalCardKind::Reverse => self.turn_direction = self.turn_direction.flip(),
+                NormalCardKind::PlusTwo => self.give_next += 2,
+                NormalCardKind::Number(_) => {}
             },
-            _ => (),
+            CardKind::Special(k) => match k {
+                SpecialCardKind::PlusFour => self.give_next += 4,
+                SpecialCardKind::ChangeColor => {}
+            },
         }
+        self.played_cards.push(card)
     }
 
     pub fn can_play(&self, card: &Card) -> bool {
+        if card.color == Color::None {
+            return false;
+        }
         let Some(top) = self.played_cards.last() else {
             return true;
         };
@@ -148,11 +177,11 @@ impl Default for State {
                     kind: CardKind::Normal(NormalCardKind::PlusTwo),
                 });
                 unplayed_cards.push(Card {
-                    color,
+                    color: Color::None,
                     kind: CardKind::Special(SpecialCardKind::PlusFour),
                 });
                 unplayed_cards.push(Card {
-                    color,
+                    color: Color::None,
                     kind: CardKind::Special(SpecialCardKind::ChangeColor),
                 });
             }
@@ -161,8 +190,9 @@ impl Default for State {
             played_cards: Default::default(),
             unplayed_cards,
             turn_direction: TurnDirection::Clockwise,
-            skip_next: false,
+            skip_next: 0,
             turn_index: 0,
+            give_next: 0,
         }
     }
 }

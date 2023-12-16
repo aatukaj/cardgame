@@ -5,7 +5,7 @@ use rand::seq::SliceRandom;
 use tokio::sync::mpsc;
 
 use crate::{
-    game::{Player, State},
+    game::{CardKind, Color, Player, State},
     messages::{ChatMessage, GameState, Response, UserData},
     Command, PlayerId, Ser,
 };
@@ -54,6 +54,7 @@ impl Room {
                     turn_index: game_state.turn_index,
                     top_card,
                     self_index: i,
+                    direction: game_state.turn_direction
                 })
                 .ser(),
             )
@@ -73,43 +74,62 @@ impl Room {
                     self.handle_send_message(content, &mut game_state, user_id)
                         .await;
                 }
-                Command::PlayCard(user_id, i) => {
-                    self.handle_play_card(&mut game_state, user_id, i).await;
+                Command::PlayCard(user_id, i, c) => {
+                    self.handle_play_card(&mut game_state, user_id, i, c).await;
                 }
                 Command::Leave(user_id) => {
                     if let Some(p) = self.players.shift_remove(&user_id) {
                         game_state.unplayed_cards.extend(p.cards.into_iter())
                     }
                 }
+                Command::TakeCard(user_id) => {
+                    if let Some(p) = self
+                        .get_mut_player_if_turn(&user_id, &game_state)
+                        .filter(|p| !p.cards.iter().any(|c| game_state.can_play(c)))
+                    {
+                        p.cards.push(game_state.unplayed_cards.pop().unwrap());
+                    }
+                    game_state.next_turn(&mut self);
+                }
                 Command::Noop => (),
             };
         }
     }
-
+    fn get_mut_player_if_turn(
+        &mut self,
+        player_id: &PlayerId,
+        game_state: &State,
+    ) -> Option<&mut Player> {
+        self.players
+            .get_index_mut(game_state.turn_index)
+            .and_then(|(id, p)| (id == player_id).then_some(p))
+    }
     async fn handle_play_card(
         &mut self,
         game_state: &mut State,
         user_id: usize,
         card_index: usize,
+        new_color: Color,
     ) {
-        let Some(player) = self
-            .players
-            .get_index_mut(game_state.turn_index)
-            .and_then(|(id, p)| (id == &user_id).then_some(p))
-        else {
+        let Some(player) = self.get_mut_player_if_turn(&user_id, &game_state) else {
             error!("Player does not exist");
             return;
         };
         if player
             .cards
-            .get(card_index)
+            .get_mut(card_index)
+            .map(|c| match c.kind {
+                CardKind::Special(_) => {
+                    c.color = new_color;
+                    c
+                }
+                CardKind::Normal(_) => c,
+            })
             .is_some_and(|c| game_state.can_play(c))
         {
-            game_state
-                .played_cards
-                .push(player.cards.remove(card_index));
-            game_state.next_turn(&self);
-            self.broadcast_gamestate(&*game_state).await;
+            game_state.played_cards.push(player.cards.remove(card_index));
+            game_state.next_turn(self);
+            self.broadcast_gamestate(game_state).await;
         }
     }
 
@@ -128,7 +148,7 @@ impl Room {
                 info!("{} got cards: {:?}", p.user_name, p.cards);
             }
             self.game_started = true;
-            self.broadcast_gamestate(&*game_state).await;
+            self.broadcast_gamestate(game_state).await;
         }
         self.broadcast_message(ChatMessage {
             content: content.into(),

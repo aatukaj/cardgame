@@ -1,5 +1,5 @@
-mod messages;
 pub mod game;
+mod messages;
 mod room;
 
 use std::{env, io::Error};
@@ -7,6 +7,7 @@ use std::{env, io::Error};
 use futures_util::{
     future, future::join_all, stream::select_all, SinkExt, StreamExt, TryStreamExt,
 };
+use game::Color;
 use log::{error, info};
 use messages::{GameState, Request, UserData};
 use serde::Serialize;
@@ -20,14 +21,14 @@ use tokio_tungstenite::tungstenite::{
     Message,
 };
 
-
 type PlayerId = usize;
 
 pub enum Command {
     SendMessage(PlayerId, String),
     Join(oneshot::Sender<Result<(PlayerId, mpsc::Receiver<String>), String>>),
     Leave(PlayerId),
-    PlayCard(PlayerId, usize),
+    PlayCard(PlayerId, usize, Color),
+    TakeCard(PlayerId),
     Noop,
 }
 
@@ -63,8 +64,6 @@ trait Ser: Serialize {
     }
 }
 impl<T> Ser for T where T: Serialize {}
-
-
 
 async fn handle_connection(stream: TcpStream, tx: mpsc::Sender<Command>) {
     let addr = stream
@@ -103,7 +102,8 @@ async fn handle_connection(stream: TcpStream, tx: mpsc::Sender<Command>) {
                         let Ok(i) = serde_json::from_str::<Request>(&txt) else {break;};
                         tx.send(match i {
                             Request::SendMessage{content} => Command::SendMessage(self_id, content),
-                            Request::PlayCard(i) => Command::PlayCard(self_id, i)
+                            Request::PlayCard(i, c) => Command::PlayCard(self_id, i, c),
+                            Request::TakeCard => Command::TakeCard(self_id),
                         }).await.unwrap();
                     },
                     Message::Close(_) => {

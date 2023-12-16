@@ -2,4 +2,4 @@
 import type { Card } from "./Card";
 import type { UserData } from "./UserData";
 
-export interface GameState { users: Array, own_cards: Array, turn_index: number, top_card: Card | null, self_index: number, }
+export interface GameState { users: Array<UserData>, ownCards: Array<Card>, turnIndex: number, topCard: Card | null, selfIndex: number, }

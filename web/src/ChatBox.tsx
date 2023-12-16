@@ -1,9 +1,9 @@
 import { useState, useEffect } from 'react'
 import type { ChatMessage } from '@bindings/ChatMessage'
 import type { Response } from '@bindings/Response'
-import type { Request } from '@bindings/Request'
 
-import useWebSocket, { ReadyState } from 'react-use-websocket'
+
+import useWebSocket from 'react-use-websocket'
 
 function ChatBox() {
     const {sendJsonMessage, lastJsonMessage } = useWebSocket<Response>("ws://127.0.0.1:8080", { share: true });

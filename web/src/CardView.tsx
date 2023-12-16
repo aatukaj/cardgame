@@ -1,6 +1,7 @@
 import { Card } from '@bindings/Card'
 import type { NormalCardKind } from '@bindings/NormalCardKind';
 import type { SpecialCardKind } from '@bindings/SpecialCardKind';
+import { COLOR_TO_BG } from './util';
 
 
 
@@ -24,16 +25,11 @@ function SpecialCardInner({ kind }: { kind: SpecialCardKind }) {
     }
 }
 
-function CardView({ card, selected=false }: { card: Card, selected?: boolean}) {
-    const color = {
-        "Red": "bg-red-500",
-        "Yellow": "bg-yellow-500",
-        "Green": "bg-green-500",
-        "Blue": "bg-blue-500",
-    }[card.color];
+function CardView({ card, selected=false, hover=false }: { card: Card, selected?: boolean, hover?: boolean}) {
+    const color = COLOR_TO_BG[card.color];
     return (
 
-        <div className={`${card.kind.tag === "Normal" ? color : "bg-black"} ${selected ? "shadow-lg shadow-white" : ""} w-20 h-32 relative rounded-md border-white-0 border-4 text-center flex flex-col justify-center text-white font-bold text-4xl items-center hover:-translate-y-2 transition-all`}>
+        <div className={`${card.kind.tag === "Normal" ? color : "bg-black"} ${selected ? "shadow-lg shadow-white" : ""} ${hover ? "hover:-translate-y-2": ""} w-20 h-32 relative rounded-md border-white-0 border-4 text-center flex flex-col justify-center text-white font-bold text-4xl items-center transition-all select-none`}>
             {card.kind.tag === "Normal" ?
                 <NormalCardInner kind={card.kind.fields} /> :
                 <>

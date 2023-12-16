@@ -7,10 +7,10 @@ edition = "2021"
 
 [dependencies]
 tokio = { version = "1", features = ["full"] }
-tokio-tungstenite = "0.20"
+tokio-tungstenite = "0.21"
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
-ts-rs = "7"
+ts-rs = { git = "https://github.com/aatukaj/ts-rs.git", branch = "borrow-type-args" }
 futures-util = "0.3"
 log = "0.4"
 env_logger="0.10"

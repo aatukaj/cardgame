@@ -7,7 +7,8 @@ use ts_rs::TS;
 #[ts(export)]
 #[serde(tag = "tag", content = "fields")]
 pub enum Request {
-    PlayCard(usize),
+    PlayCard(usize, Color),
+    TakeCard,
     SendMessage { content: String },
 }
 
@@ -28,8 +29,10 @@ pub struct ChatMessage<'a> {
 
 #[derive(Clone, Debug, TS, Serialize)]
 #[ts(export)]
+#[serde(rename_all = "camelCase")]
 pub struct GameState<'a> {
     pub users: &'a Vec<UserData<'a>>,
+    pub direction: TurnDirection,
     pub own_cards: &'a Vec<Card>,
     pub turn_index: usize,
     pub top_card: Option<&'a Card>,
@@ -38,6 +41,7 @@ pub struct GameState<'a> {
 
 #[derive(Clone, Debug, TS, Serialize)]
 #[ts(export)]
+#[serde(rename_all = "camelCase")]
 pub struct UserData<'a> {
     pub user_name: &'a str,
     pub card_count: usize,
