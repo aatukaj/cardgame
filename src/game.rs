@@ -133,31 +133,13 @@ impl Default for State {
             });
             for _ in 0..2 {
                 for i in 1..=9 {
-                    unplayed_cards.push(Card {
-                        color,
-                        kind: CardKind::Normal(NormalCardKind::Number(i)),
-                    })
+                    unplayed_cards.push(Card::number(i, color))
                 }
-                unplayed_cards.push(Card {
-                    color,
-                    kind: CardKind::Normal(NormalCardKind::Block),
-                });
-                unplayed_cards.push(Card {
-                    color,
-                    kind: CardKind::Normal(NormalCardKind::Reverse),
-                });
-                unplayed_cards.push(Card {
-                    color,
-                    kind: CardKind::Normal(NormalCardKind::PlusTwo),
-                });
-                unplayed_cards.push(Card {
-                    color: Color::None,
-                    kind: CardKind::Special(SpecialCardKind::PlusFour),
-                });
-                unplayed_cards.push(Card {
-                    color: Color::None,
-                    kind: CardKind::Special(SpecialCardKind::ChangeColor),
-                });
+                unplayed_cards.push(Card::block(color));
+                unplayed_cards.push(Card::reverse(color));
+                unplayed_cards.push(Card::plus_two(color));
+                unplayed_cards.push(Card::plus_four());
+                unplayed_cards.push(Card::change_color());
             }
         }
         Self {

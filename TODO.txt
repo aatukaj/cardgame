@@ -1,7 +1,7 @@
 [ ] SERVER: send error message to websocket when closing / when can't join
 [x] SERVER: lobby create name validation
 
-[ ] CLIENT: draw new card button
+[ ] CLIENT:  new card draw button
 
 [ ] SERVER&CLIENT: login and session token, username, cookiesss
 

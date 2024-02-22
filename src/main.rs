@@ -2,17 +2,30 @@ pub mod game;
 mod messages;
 mod room;
 
-use std::{collections::HashMap, env, io::Error, sync::Arc};
+use std::{
+    collections::{HashMap, HashSet},
+    env,
+    io::Error,
+    sync::Arc,
+};
 
 use axum::{
     extract::{
         ws::{Message, WebSocket},
         Path, State, WebSocketUpgrade,
     },
-    http::{header::CONTENT_TYPE, StatusCode},
-    response::{IntoResponse, Response},
-    routing::get,
+    http::{
+        header::{
+            ACCESS_CONTROL_ALLOW_CREDENTIALS, ACCESS_CONTROL_ALLOW_HEADERS, CONTENT_TYPE, COOKIE,
+        }, HeaderValue, Method, StatusCode
+    },
+    response::{IntoResponse, Redirect, Response},
+    routing::{get, post},
     Json, Router,
+};
+use axum_extra::extract::{
+    cookie::{Cookie, Expiration, SameSite},
+    CookieJar,
 };
 use futures_util::{future::join_all, SinkExt, StreamExt, TryFutureExt};
 use game::Color;
@@ -28,14 +41,28 @@ use tokio::{
 use uuid::Uuid;
 type PlayerId = usize;
 
-use tower_http::cors::{Any, CorsLayer};
+use tower_http::cors::{AllowOrigin, Any, CorsLayer};
 use ts_rs::TS;
 
+static SESSION_TOKEN: &str = "SESSION_TOKEN_I_FKN_LOVE_WEB_DEV_YIPPEEE";
 #[derive(Default)]
 struct AppState {
     lobbies: HashMap<Uuid, mpsc::Sender<Command>>,
+    users: HashMap<Uuid, String>,
+    taken_user_names: HashSet<String>,
 }
+
 impl AppState {
+    /// Adds a new new user if the name is free. Returns the user's generated Uuid on success
+    fn new_user(&mut self, name: String) -> Option<Uuid> {
+        info!("new_user: {name}");
+        (!self.taken_user_names.contains(&name)).then(|| {
+            let id = Uuid::new_v4();
+            self.users.insert(id, name.clone());
+            self.taken_user_names.insert(name);
+            id
+        })
+    }
     async fn collect_lobby_data(&mut self) -> Vec<LobbyData> {
         let lobby_data = join_all(self.lobbies.values().map(|tx| {
             let (sender, receiver) = oneshot::channel();
@@ -71,7 +98,7 @@ async fn main() -> Result<(), Error> {
         .unwrap();
     let addr = env::args()
         .nth(1)
-        .unwrap_or_else(|| "127.0.0.1:8080".to_string());
+        .unwrap_or_else(|| "localhost:8080".to_string());
 
     // Create the event loop and TCP listener we'll accept connections on.
     let listener = TcpListener::bind(&addr).await.unwrap();
@@ -89,12 +116,8 @@ async fn main() -> Result<(), Error> {
     let app = Router::new()
         .route("/join/:id", get(lobby_join))
         .route("/lobbies", get(lobbies_list).post(lobbies_create))
-        .with_state(state)
-        .layer(
-            CorsLayer::new()
-                .allow_origin(Any)
-                .allow_headers([CONTENT_TYPE]),
-        );
+        .route("/login", post(login))
+        .with_state(state);
     axum::serve(listener, app).await.unwrap();
     Ok(())
 }
@@ -119,10 +142,17 @@ async fn lobbies_create(
 ) -> Response {
     info!("New lobby {input:?}");
     if input.name.is_empty() {
-        return (StatusCode::BAD_REQUEST, "Lobby name cannot be empty.").into_response()
+        return (StatusCode::BAD_REQUEST, "Lobby name cannot be empty.").into_response();
     }
-    if state.lock().await.collect_lobby_data().await.iter().any(|i| i.name == input.name) {
-        return (StatusCode::BAD_REQUEST, "Lobby name already exists.").into_response()
+    if state
+        .lock()
+        .await
+        .collect_lobby_data()
+        .await
+        .iter()
+        .any(|i| i.name == input.name)
+    {
+        return (StatusCode::BAD_REQUEST, "Lobby name already exists.").into_response();
     }
     let (tx, id) = RoomActor::spawn_new(input.name, input.max_players);
     state.lock().await.lobbies.insert(id, tx);
@@ -153,6 +183,27 @@ async fn lobby_join(
         None => return (StatusCode::NOT_FOUND, "Lobby doesn't exist").into_response(),
     };
     ws.on_upgrade(move |socket| handle_socket(socket, tx))
+}
+
+#[derive(Deserialize, TS)]
+#[ts(export)]
+#[serde(rename_all = "camelCase")]
+struct LoginData {
+    user_name: String,
+}
+
+async fn login(
+    jar: CookieJar,
+    State(state): State<SharedState>,
+    Json(input): Json<LoginData>,
+) -> Result<CookieJar, (StatusCode, &'static str)> {
+    if let Some(id) = state.lock().await.new_user(input.user_name) {
+        let cookie = Cookie::build((SESSION_TOKEN, id.to_string())).expires(Expiration::Session).http_only(false).same_site(SameSite::Lax).secure(false);
+
+        Ok(jar.add(cookie))
+    } else {
+        Err((StatusCode::BAD_REQUEST, "Username already exists"))
+    }
 }
 
 async fn handle_socket(socket: WebSocket, tx: mpsc::Sender<Command>) {

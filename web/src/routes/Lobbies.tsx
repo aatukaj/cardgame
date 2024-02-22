@@ -4,6 +4,7 @@ import type { CreateLobbyData } from '@bindings/CreateLobbyData'
 import { Link, useNavigate } from 'react-router-dom';
 
 import { UserGroupIcon } from '@heroicons/react/24/outline'
+import UICard from '../components/UICard';
 
 export default function Lobbies() {
     const [lobbies, setLobbies] = useState<LobbyData[]>([]);
@@ -57,17 +58,22 @@ export default function Lobbies() {
                 </tbody>
             </table>
         </div>
-        <div className='bg-zinc-900 border border-zinc-700 self-start basis-1/5 flex-none'>
-            <h1 className='text-lg p-2 bg-zinc-800 text-center'>Create Lobby</h1>
-            <form className='text-white flex flex-col gap-2 p-2' onSubmit={onSubmit}>
-                <input type='text' placeholder='Lobby name' className='bg-zinc-800 border border-zinc-700 h-8' name='name'></input>
+        <div className='self-start basis-1/5 flex-none'>
+            <UICard>
+                <UICard.Header>
+                    Create Lobby
+                </UICard.Header>
+                <form className='text-white flex flex-col gap-2 p-2' onSubmit={onSubmit}>
+                    <input type='text' placeholder='Lobby name' className='bg-zinc-800 border border-zinc-700 h-8' name='name'></input>
 
-                <div className='flex flex-row bg-zinc-800 border border-zinc-700'>
-                    <UserGroupIcon className='w-8 h-8 float-left' />
-                    <input type='number' defaultValue={4} max={8} min={2} className='bg-inherit w-full' name='max_players' />
-                </div>
-                <input type='submit' value='Create' className=' w-full h-8 bg-green-500 border  border-green-400' />
-            </form>
+                    <div className='flex flex-row bg-zinc-800 border border-zinc-700'>
+                        <UserGroupIcon className='w-8 h-8 float-left' />
+                        <input type='number' defaultValue={4} max={8} min={2} className='bg-inherit w-full' name='max_players' />
+                    </div>
+                    <input type='submit' value='Create' className=' w-full h-8 bg-green-500 border  border-green-400' />
+                </form>
+            </UICard>
+
         </div>
 
     </div>
