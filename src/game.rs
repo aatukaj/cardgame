@@ -1,49 +1,16 @@
-use serde::{Deserialize, Serialize};
+use std::mem;
+
+use rand::seq::SliceRandom;
+use serde::{Serialize};
 use ts_rs::TS;
 
-use crate::room::Room;
+use crate::room::RoomActor;
+mod player;
+pub use player::*;
+mod card;
+pub use card::*;
 
-#[derive(Copy, Clone, Debug, PartialEq, TS, Serialize, Deserialize)]
-#[ts(export)]
-pub enum Color {
-    Red,
-    Green,
-    Blue,
-    Yellow,
-    None,
-}
 
-#[derive(Copy, Clone, Debug, PartialEq, TS, Serialize, Deserialize)]
-#[serde(tag = "tag", content = "fields")]
-#[ts(export)]
-pub enum NormalCardKind {
-    Number(u8),
-    Reverse,
-    PlusTwo,
-    Block,
-}
-
-#[derive(Copy, Clone, Debug, PartialEq, TS, Serialize, Deserialize)]
-#[ts(export)]
-pub enum SpecialCardKind {
-    PlusFour,
-    ChangeColor,
-}
-
-#[derive(Copy, Clone, Debug, PartialEq, TS, Serialize, Deserialize)]
-#[ts(export)]
-#[serde(tag = "tag", content = "fields")]
-pub enum CardKind {
-    Normal(NormalCardKind),
-    Special(SpecialCardKind),
-}
-
-#[derive(TS, Clone, Debug, Serialize, Deserialize)]
-#[ts(export)]
-pub struct Card {
-    pub color: Color,
-    pub kind: CardKind,
-}
 pub struct State {
     pub played_cards: Vec<Card>,
     pub unplayed_cards: Vec<Card>,
@@ -53,7 +20,8 @@ pub struct State {
     pub turn_index: usize,
 }
 
-#[derive(TS,Clone, Copy, Serialize, Debug)]
+#[derive(TS, Clone, Copy, Serialize, Debug)]
+#[ts(export)]
 pub enum TurnDirection {
     Clockwise,
     CounterClockwise,
@@ -67,17 +35,23 @@ impl TurnDirection {
     }
 }
 
-#[derive(Debug)]
-pub struct Player {
-    pub cards: Vec<Card>,
-    pub tx: tokio::sync::mpsc::Sender<String>,
-    pub user_name: String,
-}
-
-const COLORS: [Color; 4] = [Color::Red, Color::Green, Color::Yellow, Color::Blue];
-
 impl State {
-    pub fn next_turn(&mut self, room: &mut Room) {
+    /// Pops the top card from `unplayed_cards`
+    /// if `unplayed_cards` is empty, shuffles the played cards back into it
+    pub fn draw_card(&mut self) -> Card {
+        match self.unplayed_cards.pop() {
+            Some(card) => card,
+            None => {
+                let top = self.played_cards.pop().unwrap();
+                mem::swap(&mut self.unplayed_cards, &mut self.played_cards);
+                self.unplayed_cards.shuffle(&mut rand::thread_rng());
+                self.played_cards = vec![top];
+                self.unplayed_cards.pop().unwrap()
+            }
+        }
+    }
+
+    pub fn next_turn(&mut self, room: &mut RoomActor) {
         for _ in 0..=self.skip_next {
             match self.turn_direction {
                 TurnDirection::Clockwise => {
@@ -194,5 +168,36 @@ impl Default for State {
             turn_index: 0,
             give_next: 0,
         }
+    }
+}
+
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    #[test]
+    fn test_draw_card_unplayed_empty() {
+        let mut state = State {
+            played_cards: vec![Card::block(Color::Red), Card::block(Color::Blue), Card::block(Color::Yellow)],
+            unplayed_cards: vec![],
+            ..Default::default()
+        };
+        let drawn = state.draw_card();
+        assert_eq!(state.played_cards, vec![Card::block(Color::Yellow)]);
+        assert!(state.unplayed_cards.len() == 1);
+        assert!(matches!(drawn.color,  Color::Red | Color::Blue))
+    }
+
+    #[test]
+    fn test_draw_card_unplayed_non_empty() {
+        let mut state = State {
+            played_cards: vec![Card::block(Color::Red), Card::block(Color::Blue), Card::block(Color::Yellow)],
+            unplayed_cards: vec![Card::block(Color::Green)],
+            ..Default::default()
+        };
+        let drawn = state.draw_card();
+        assert_eq!(state.played_cards, vec![Card::block(Color::Red), Card::block(Color::Blue), Card::block(Color::Yellow)]);
+        assert!(state.unplayed_cards.is_empty());
+        assert_eq!(drawn, Card::block(Color::Green))
     }
 }

@@ -3,30 +3,43 @@ use indexmap::IndexMap;
 use log::{error, info};
 use rand::seq::SliceRandom;
 use tokio::sync::mpsc;
+use uuid::Uuid;
 
 use crate::{
     game::{CardKind, Color, Player, State},
     messages::{ChatMessage, GameState, Response, UserData},
-    Command, PlayerId, Ser,
+    Command, LobbyData, PlayerId, Ser,
 };
 
 const MAX_PLAYERS: usize = 6;
 
-pub struct Room {
+pub struct RoomActor {
+    name: String,
     game_started: bool,
     pub players: IndexMap<PlayerId, Player>,
+    max_players: usize,
     next_id: usize,
+    id: Uuid,
     rx: mpsc::Receiver<Command>,
 }
-impl Room {
-    pub fn new(rx: mpsc::Receiver<Command>) -> Self {
-        Self {
+impl RoomActor {
+    pub fn spawn_new(name: String, max_players: usize) -> (mpsc::Sender<Command>, Uuid) {
+        let (tx, rx) = mpsc::channel(8);
+        let id = Uuid::new_v4();
+        let room = Self {
+            name,
             game_started: false,
-            players: IndexMap::new(),
             next_id: 0,
             rx,
-        }
+            id,
+            players: IndexMap::new(),
+            max_players
+        };
+        tokio::spawn(room.run());
+        (tx, id)
     }
+
+
     async fn broadcast_message(&self, message: ChatMessage<'_>) {
         let data = Response::ChatMessage(message).ser();
         join_all(
@@ -54,7 +67,7 @@ impl Room {
                     turn_index: game_state.turn_index,
                     top_card,
                     self_index: i,
-                    direction: game_state.turn_direction
+                    direction: game_state.turn_direction,
                 })
                 .ser(),
             )
@@ -67,6 +80,16 @@ impl Room {
         game_state.unplayed_cards.shuffle(&mut rand::thread_rng());
         while let Some(cmd) = self.rx.recv().await {
             match cmd {
+                Command::GetData(sender) => {
+                    sender
+                        .send(LobbyData {
+                            name: self.name.clone(),
+                            players: self.players.len(),
+                            max_players: self.max_players,
+                            id: self.id,
+                        })
+                        .unwrap();
+                }
                 Command::Join(sender) => {
                     self.handle_join(sender, &game_state).await;
                 }
@@ -85,12 +108,15 @@ impl Room {
                 Command::TakeCard(user_id) => {
                     if let Some(p) = self
                         .get_mut_player_if_turn(&user_id, &game_state)
-                        .filter(|p| !p.cards.iter().any(|c| game_state.can_play(c)))
+                        .filter(|p| p.can_play_card(&game_state))
                     {
-                        p.cards.push(game_state.unplayed_cards.pop().unwrap());
+                        p.cards.push(game_state.draw_card());
+                        game_state.next_turn(&mut self);
+                        self.broadcast_gamestate(&game_state).await;
                     }
-                    game_state.next_turn(&mut self);
-                }
+                    
+                },
+                Command::Shutdown => break,
                 Command::Noop => (),
             };
         }
@@ -127,7 +153,9 @@ impl Room {
             })
             .is_some_and(|c| game_state.can_play(c))
         {
-            game_state.played_cards.push(player.cards.remove(card_index));
+            game_state
+                .played_cards
+                .push(player.cards.remove(card_index));
             game_state.next_turn(self);
             self.broadcast_gamestate(game_state).await;
         }
@@ -164,7 +192,7 @@ impl Room {
     ) {
         if self.game_started {
             sender.send(Err("Already started".into())).unwrap();
-        } else if self.players.len() > MAX_PLAYERS {
+        } else if self.players.len() >= self.max_players {
             sender.send(Err("Room is full".into())).unwrap();
         } else {
             let (tx, rx) = mpsc::channel(1);
@@ -172,20 +200,22 @@ impl Room {
 
             let mut user_name: String = uuid::Uuid::new_v4().to_string();
             user_name.truncate(4);
-            self.broadcast_message(ChatMessage {
-                content: format!("{user_name} joined!").into(),
-                user_name: "SERVER".into(),
-            })
-            .await;
+
             self.players.insert(
                 self.next_id,
                 Player {
                     cards: Vec::new(),
                     tx,
-                    user_name,
+                    user_name: user_name.clone(),
                 },
             );
             self.next_id += 1;
+
+            self.broadcast_message(ChatMessage {
+                content: format!("{user_name} joined! {}/{} players.", self.players.len(), self.max_players).into(),
+                user_name: "SERVER".into(),
+            })
+            .await;
             self.broadcast_gamestate(game_state).await;
         };
     }

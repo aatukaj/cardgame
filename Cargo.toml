@@ -7,16 +7,18 @@ edition = "2021"
 
 [dependencies]
 tokio = { version = "1", features = ["full"] }
-tokio-tungstenite = "0.21"
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
-ts-rs = { git = "https://github.com/aatukaj/ts-rs.git", branch = "borrow-type-args" }
+ts-rs = { version="7", features = ["uuid-impl"]}
 futures-util = "0.3"
 log = "0.4"
-env_logger="0.10"
+env_logger="0.11"
 rand="0.8"
 indexmap = { version = "2.0.2", features = ["serde"] }
-
+axum = {version = "0.7", features = ["ws", "macros"] }
+tower = "0.4"
+tower-http = {version="0.5", features = ["cors"]}
+axum-extra = { version = "0.9.2", features = ["cookie"] }
 
 [dependencies.uuid]
 version = "1.4"
@@ -24,4 +26,5 @@ features = [
     "v4",                # Lets you generate random UUIDs
     "fast-rng",          # Use a faster (but still sufficiently random) RNG
     "macro-diagnostics", # Enable better diagnostics for compile-time UUIDs
+    "serde",
 ]

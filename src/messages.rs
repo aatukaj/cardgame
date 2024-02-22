@@ -18,10 +18,12 @@ pub enum Request {
 pub enum Response<'a> {
     ChatMessage(ChatMessage<'a>),
     GameState(GameState<'a>),
+    // Error(String),
 }
 
 #[derive(Clone, Debug, TS, Serialize)]
 #[ts(export)]
+#[serde(rename_all="camelCase")]
 pub struct ChatMessage<'a> {
     pub content: Cow<'a, str>,
     pub user_name: Cow<'a, str>,
@@ -31,7 +33,7 @@ pub struct ChatMessage<'a> {
 #[ts(export)]
 #[serde(rename_all = "camelCase")]
 pub struct GameState<'a> {
-    pub users: &'a Vec<UserData<'a>>,
+    pub users: &'a Vec<UserData<'a>>, // Should be `&'a [UserData<'a>]` but ts-rs doesn't work with it
     pub direction: TurnDirection,
     pub own_cards: &'a Vec<Card>,
     pub turn_index: usize,
