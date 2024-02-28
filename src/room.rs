@@ -1,3 +1,5 @@
+use std::sync::Arc;
+
 use futures_util::future::join_all;
 use indexmap::IndexMap;
 use log::{error, info};
@@ -7,11 +9,11 @@ use uuid::Uuid;
 
 use crate::{
     game::{CardKind, Color, Player, State},
-    messages::{ChatMessage, GameState, Response, UserData},
+    game_messages::{ChatMessage, GameState, Response, UserData},
     Command, LobbyData, PlayerId, Ser,
 };
 
-const MAX_PLAYERS: usize = 6;
+
 
 pub struct RoomActor {
     name: String,
@@ -90,8 +92,8 @@ impl RoomActor {
                         })
                         .unwrap();
                 }
-                Command::Join(sender) => {
-                    self.handle_join(sender, &game_state).await;
+                Command::Join(user_name, sender) => {
+                    self.handle_join(sender, &game_state, user_name).await;
                 }
                 Command::SendMessage(user_id, content) => {
                     self.handle_send_message(content, &mut game_state, user_id)
@@ -179,8 +181,8 @@ impl RoomActor {
             self.broadcast_gamestate(game_state).await;
         }
         self.broadcast_message(ChatMessage {
-            content: content.into(),
-            user_name: (&self.players.get(&user_id).unwrap().user_name).into(),
+            content: &content,
+            user_name: (self.players.get(&user_id).unwrap().user_name).as_ref(),
         })
         .await;
     }
@@ -189,6 +191,7 @@ impl RoomActor {
         &mut self,
         sender: tokio::sync::oneshot::Sender<Result<(usize, mpsc::Receiver<String>), String>>,
         game_state: &State,
+        user_name: Arc<str>,
     ) {
         if self.game_started {
             sender.send(Err("Already started".into())).unwrap();
@@ -198,21 +201,20 @@ impl RoomActor {
             let (tx, rx) = mpsc::channel(1);
             sender.send(Ok((self.next_id, rx))).unwrap();
 
-            let mut user_name: String = uuid::Uuid::new_v4().to_string();
-            user_name.truncate(4);
+     
 
             self.players.insert(
                 self.next_id,
                 Player {
                     cards: Vec::new(),
                     tx,
-                    user_name: user_name.clone(),
+                    user_name: Arc::clone(&user_name),
                 },
             );
             self.next_id += 1;
 
             self.broadcast_message(ChatMessage {
-                content: format!("{user_name} joined! {}/{} players.", self.players.len(), self.max_players).into(),
+                content: &format!("{user_name} joined! {}/{} players.", self.players.len(), self.max_players),
                 user_name: "SERVER".into(),
             })
             .await;

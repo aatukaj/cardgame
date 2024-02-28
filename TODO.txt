@@ -1,7 +1,9 @@
 [ ] SERVER: send error message to websocket when closing / when can't join
+[ ] SERVER: don't allow same user to join game twice
+[ ] SERVER: split session token and actual user id
 [x] SERVER: lobby create name validation
 
 [ ] CLIENT:  new card draw button
 
-[ ] SERVER&CLIENT: login and session token, username, cookiesss
+[x] SERVER&CLIENT: login and session token, username, cookiesss
 

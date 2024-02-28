@@ -30,7 +30,7 @@ export default function Game() {
     ownCards: [], topCard: null, turnIndex: 0, selfIndex: 0, users: [], direction: "Clockwise"
   });
   const { lobbyId } = useParams();
-  const { sendJsonMessage, lastJsonMessage } = useWebSocket(`ws://127.0.0.1:8080/join/${lobbyId}`);
+  const { sendJsonMessage, lastJsonMessage } = useWebSocket(`ws://${window.location.host}/ws/${lobbyId}`);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   useEffect(() => {
     if (lastJsonMessage !== null) {

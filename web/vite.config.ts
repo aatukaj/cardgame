@@ -11,6 +11,12 @@ export default defineConfig({
         changeOrigin: true,
         rewrite: (path) => path.replace(/^\/api/, ''),
       },
+      '/ws': {
+        target: 'ws://localhost:8080/lobbies/join',
+        ws: true,
+        changeOrigin: true,
+        rewrite: path => path.replace(/^\/ws/, ''),
+      }
     },
   },
 })

@@ -1,10 +1,12 @@
+use std::sync::Arc;
+
 use super::{Card, State};
 
 #[derive(Debug)]
 pub struct Player {
     pub cards: Vec<Card>,
     pub tx: tokio::sync::mpsc::Sender<String>,
-    pub user_name: String,
+    pub user_name: Arc<str>,
 }
 impl Player {
     pub fn can_play_card(&self, state: &State) -> bool {

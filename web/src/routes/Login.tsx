@@ -1,24 +1,40 @@
+import { useNavigate } from "react-router-dom";
 import UICard from "../components/UICard";
 import { LoginData } from "@bindings/LoginData"
-function onSubmit(event: React.FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    const formData = new FormData(event.currentTarget);
-    Login({ userName: formData.get("name") as string, })
-}
-async function Login(data: LoginData) {
-    const response = await fetch("/api/login", {
-        method: "POST", headers: {
-            credentials: 'include',
-            'Content-Type': 'application/json',
+import { useEffect } from "react";
 
-        }, body: JSON.stringify(data)
-    });
-    console.log(response);
-    console.log(await response.text())
-
-
-}
 export default function LoginPage() {
+    const navigate = useNavigate();
+    function onSubmit(event: React.FormEvent<HTMLFormElement>) {
+        event.preventDefault();
+        const formData = new FormData(event.currentTarget);
+        Login({ userName: formData.get("name") as string, })
+    }
+
+    async function Login(data: LoginData) {
+        const response = await fetch("/api/user/login", {
+            method: "POST", headers: {
+                credentials: 'include',
+                'Content-Type': 'application/json',
+
+            }, body: JSON.stringify(data)
+        });
+        if (response.ok) {
+            navigate("../lobbies")
+        }
+    }
+    useEffect(() => {
+        async function fetch_whoami() {
+            const response = await fetch("/api/user/whoami");
+            if (response.ok) {
+                console.log(await response.json())
+                navigate("../lobbies")
+            }
+        }
+        fetch_whoami()
+
+    }, [navigate])
+
     return <div className="flex flex-col justify-center items-center w-full h-full">
         <UICard>
             <UICard.Header>

@@ -11,7 +11,7 @@ export default function Lobbies() {
     const navigate = useNavigate();
 
     async function fetchLobbies() {
-        const response = await fetch("http://127.0.0.1:8080/lobbies");
+        const response = await fetch("/api/lobbies");
         const lobbies: LobbyData[] = await response.json();
         console.log(lobbies);
         setLobbies(lobbies);
@@ -20,7 +20,7 @@ export default function Lobbies() {
         fetchLobbies()
     }, []);
     async function createLobby(data: CreateLobbyData) {
-        const response = await fetch("http://127.0.0.1:8080/lobbies", {
+        const response = await fetch("/api/lobbies", {
             method: "POST", headers: {
                 'Content-Type': 'application/json',
             }, body: JSON.stringify(data)

@@ -1,5 +1,3 @@
-use std::borrow::Cow;
-
 use crate::game::*;
 use serde::{Deserialize, Serialize};
 use ts_rs::TS;
@@ -25,8 +23,8 @@ pub enum Response<'a> {
 #[ts(export)]
 #[serde(rename_all="camelCase")]
 pub struct ChatMessage<'a> {
-    pub content: Cow<'a, str>,
-    pub user_name: Cow<'a, str>,
+    pub content: &'a str,
+    pub user_name: &'a str,
 }
 
 #[derive(Clone, Debug, TS, Serialize)]
