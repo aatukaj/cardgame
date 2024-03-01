@@ -10,6 +10,7 @@ import RadialColorSelector from '../components/RadialColorSelector.tsx';
 import { GameState } from '@bindings/GameState.ts';
 import { ChatMessage } from '@bindings/ChatMessage.ts';
 import { useParams } from 'react-router-dom';
+import PlayerInfoView from '../components/PlayerInfoView.tsx';
 
 
 function CanPlayCard(topCard: Card | null, toPlay: Card): boolean {
@@ -30,7 +31,7 @@ export default function Game() {
     ownCards: [], topCard: null, turnIndex: 0, selfIndex: 0, users: [], direction: "Clockwise"
   });
   const { lobbyId } = useParams();
-  const { sendJsonMessage, lastJsonMessage } = useWebSocket(`ws://${window.location.host}/ws/${lobbyId}`);
+  const { sendJsonMessage, lastJsonMessage } = useWebSocket(`ws://${window.location.host}/ws/${lobbyId}`, {onClose : (event) => {console.log(event)}});
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   useEffect(() => {
     if (lastJsonMessage !== null) {
@@ -70,7 +71,7 @@ export default function Game() {
       <div className='w-full h-full flex flex-row place-content-between gap-4'>
         <div className='flex flex-col place-content-between h-full w-2/3'>
           <div className='flex flex-row place-content-evenly'>
-            {gameState.users.filter((_, i) => i != gameState.selfIndex).map((p, i) => <div key={i}><span>{p.userName}</span><br />{p.cardCount} </div>)}
+            {gameState.users.filter((_, i) => i != gameState.selfIndex).map((p, i) => <PlayerInfoView playerInfo={p} key={i}/>)}
           </div>
           <div className='self-center relative flex z-0'>
             <div onClick={() => { if (!showColorSelector) { playCard() } }}

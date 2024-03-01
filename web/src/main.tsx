@@ -10,6 +10,7 @@ import {
 } from "react-router-dom";
 import Lobbies from './routes/Lobbies.tsx';
 import LoginPage from './routes/Login.tsx'
+import CardsPreview from './routes/CardsPreview.tsx'
 
 
 
@@ -28,6 +29,9 @@ const router = createBrowserRouter([
     }, {
       path: "login",
       Component: LoginPage,
+    }, {
+      path: "card-preview",
+      Component: CardsPreview,
     }]
   }
 

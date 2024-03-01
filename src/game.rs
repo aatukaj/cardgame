@@ -1,7 +1,7 @@
 use std::mem;
 
 use rand::seq::SliceRandom;
-use serde::{Serialize};
+use serde::Serialize;
 use ts_rs::TS;
 
 use crate::room::RoomActor;

@@ -21,7 +21,7 @@ async fn login(
         let cookie = Cookie::build((SESSION_TOKEN, id.to_string()))
             .expires(Expiration::Session)
             .http_only(false)
-            .same_site(SameSite::None)
+            .same_site(SameSite::Lax)
             .path("/")
             .secure(false);
 

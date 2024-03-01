@@ -3,7 +3,13 @@
 [ ] SERVER: split session token and actual user id
 [x] SERVER: lobby create name validation
 
+
 [ ] CLIENT:  new card draw button
+[ ] CLIENT: go to /login if response is UNAUTHORIZED then redirect back
 
-[x] SERVER&CLIENT: login and session token, username, cookiesss
 
+[x] login and session token, username, cookiesss
+[ ] multiple cards played in one turn
+[ ] avatars
+[ ] seperate pre-start screen for lobbies, shows current players and empty
+[ ] switch to react router's Form elements

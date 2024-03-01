@@ -2,9 +2,10 @@ use std::sync::Arc;
 
 use futures_util::future::join_all;
 use indexmap::IndexMap;
-use log::{error, info};
+
 use rand::seq::SliceRandom;
 use tokio::sync::mpsc;
+use tracing::{error, info};
 use uuid::Uuid;
 
 use crate::{

@@ -1,0 +1,108 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+
+<svg
+   width="32"
+   height="32"
+   viewBox="0 0 8.4666666 8.4666666"
+   version="1.1"
+   id="svg1"
+   sodipodi:docname="player.svg"
+   inkscape:version="1.3.2 (091e20e, 2023-11-25, custom)"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg">
+  <sodipodi:namedview
+     id="namedview1"
+     pagecolor="#212121"
+     bordercolor="#000000"
+     borderopacity="0.25"
+     inkscape:showpageshadow="2"
+     inkscape:pageopacity="0.0"
+     inkscape:pagecheckerboard="0"
+     inkscape:deskcolor="#d1d1d1"
+     inkscape:document-units="mm"
+     inkscape:zoom="7.2407734"
+     inkscape:cx="-0.62148057"
+     inkscape:cy="3.65983"
+     inkscape:window-width="1920"
+     inkscape:window-height="1017"
+     inkscape:window-x="760"
+     inkscape:window-y="62"
+     inkscape:window-maximized="1"
+     inkscape:current-layer="layer4" />
+  <defs
+     id="defs1">
+    <inkscape:path-effect
+       effect="mirror_symmetry"
+       start_point="39.648794,69.321441"
+       end_point="39.648794,152.18074"
+       center_point="39.648794,110.75109"
+       id="path-effect9"
+       is_visible="true"
+       lpeversion="1.2"
+       lpesatellites=""
+       mode="X"
+       discard_orig_path="false"
+       fuse_paths="false"
+       oposite_fuse="false"
+       split_items="false"
+       split_open="false"
+       link_styles="false" />
+  </defs>
+  <g
+     inkscape:groupmode="layer"
+     id="layer3"
+     inkscape:label="Body">
+    <path
+       sodipodi:type="star"
+       style="fill:#ffffff;"
+       id="path7"
+       inkscape:flatsided="true"
+       sodipodi:sides="3"
+       sodipodi:cx="64.030449"
+       sodipodi:cy="242.0134"
+       sodipodi:r1="49.19854"
+       sodipodi:r2="24.59927"
+       sodipodi:arg1="-1.5707963"
+       sodipodi:arg2="-0.52359878"
+       inkscape:rounded="0"
+       inkscape:randomized="0"
+       d="m 64.03045,192.81486 42.60718,73.79781 -85.214367,0 z"
+       inkscape:transform-center-y="-0.39668721"
+       transform="matrix(0.05210216,0,0,0.06503738,0.89720867,-9.7184718)" />
+  </g>
+  <g
+     inkscape:groupmode="layer"
+     id="layer4"
+     inkscape:label="Cravat">
+    <path
+       style="stroke-width:0.264583;fill-opacity:1;"
+       d="M 39.648794,152.18074 V 69.321441 l -17.138511,12.534135 9.52662,10.440734 -7.604364,43.94155 z m 0,0 V 69.321441 l 17.138511,12.534135 -9.52662,10.440734 7.604364,43.94155 z"
+       id="path9"
+       inkscape:path-effect="#path-effect9"
+       inkscape:original-d="M 39.648794,152.18074 V 69.321441 l -17.138511,12.534135 9.52662,10.440734 -7.604364,43.94155 z"
+       sodipodi:nodetypes="cccccc"
+       transform="matrix(0.06440595,0,0,0.06440595,1.6797151,-1.500283)" />
+  </g>
+  <path
+     d="M 5.0126138,4.5067016 4.9030598,4.2695067 A 2.1085691,2.1085691 0 0 1 4.2333332,4.3826781 2.1085691,2.1085691 0 0 1 3.5636067,4.2695067 L 3.4540526,4.5067016 A 2.3669515,2.3669515 0 0 0 4.2333332,4.6410603 2.3669515,2.3669515 0 0 0 5.0126138,4.5067016 Z"
+     style="fill:#151515;fill-opacity:0.444241;stroke-width:0.0191289"
+     id="path3" />
+  <g
+     inkscape:groupmode="layer"
+     id="layer5"
+     inkscape:label="Head">
+    <circle
+       style="fill:#ffffff;stroke-width:0.0170407"
+       id="path1"
+       cx="4.2333336"
+       cy="2.2741737"
+       r="2.1085691" />
+  </g>
+  <g
+     inkscape:groupmode="layer"
+     id="layer2"
+     inkscape:label="Eye" />
+</svg>

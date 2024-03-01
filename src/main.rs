@@ -9,17 +9,13 @@ use std::{
 };
 
 use axum::{
-    extract::
-        ws::{Message, WebSocket}
-    ,
-    routing::post,
+    extract::ws::{CloseCode, CloseFrame, Message, WebSocket},
     Router,
 };
 use futures_util::{Future, SinkExt, StreamExt};
 use game::Color;
 use game_messages::Request;
 use lobby::{Lobby, LobbyData};
-use log::info;
 use parking_lot::Mutex;
 use serde::Serialize;
 use tokio::{
@@ -27,15 +23,14 @@ use tokio::{
     select,
     sync::{mpsc, oneshot},
 };
-
 use tower_http::trace::TraceLayer;
 use uuid::Uuid;
 type PlayerId = usize;
 
-use tracing;
+use tracing::{self, info};
 use tracing_subscriber;
 
-static SESSION_TOKEN: &str = "SESSION_TOKEN_I_FKN_LOVE_WEB_DEV_YIPPEEE";
+static SESSION_TOKEN: &str = "SESSION_TOKEN";
 #[derive(Default)]
 struct AppState {
     lobbies: HashMap<Uuid, Lobby>,
@@ -43,13 +38,11 @@ struct AppState {
     taken_user_names: HashSet<String>,
 }
 
-
-
 mod lobby;
 mod user;
 
 impl AppState {
-    /// Adds a new new user if the name is free. Returns the user's generated Uuid on success
+    /// Adds a new new user if the name is free. Returns the user's generated `Uuid` on success
     fn new_user(&mut self, name: String) -> Option<Uuid> {
         info!("new_user: {name}");
         (!self.taken_user_names.contains(&name)).then(|| {
@@ -104,8 +97,8 @@ async fn main() -> Result<(), Error> {
     let state = SharedState::default();
 
     let app = Router::new()
-
-        .nest("/user", user::routes()).nest("/lobbies", lobby::routes())
+        .nest("/user", user::routes())
+        .nest("/lobbies", lobby::routes())
         .with_state(state)
         .layer(TraceLayer::new_for_http());
     axum::serve(listener, app).await.unwrap();
@@ -119,18 +112,24 @@ trait Ser: Serialize {
 }
 impl<T> Ser for T where T: Serialize {}
 
-
-
-
-
-async fn handle_socket(socket: WebSocket, tx: mpsc::Sender<Command>, user_name: Arc<str>) {
+async fn handle_socket(mut socket: WebSocket, tx: mpsc::Sender<Command>, user_name: Arc<str>) {
     let (oneshot_tx, oneshot_rx) = oneshot::channel();
 
     tx.send(Command::Join(user_name, oneshot_tx)).await.unwrap();
     let res = oneshot_rx.await.unwrap();
-    let Ok((self_id, mut room_rx)) = res else {
-        socket.close().await.unwrap();
-        return;
+
+    let (self_id, mut room_rx) = match res {
+        Ok(t) => t,
+        Err(err) => {
+            socket
+                .send(Message::Close(Some(CloseFrame {
+                    code: 1011,
+                    reason: err.into(),
+                })))
+                .await
+                .unwrap();
+            return;
+        }
     };
 
     let (mut write, mut read) = socket.split();
