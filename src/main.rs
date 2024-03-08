@@ -9,7 +9,7 @@ use std::{
 };
 
 use axum::{
-    extract::ws::{CloseCode, CloseFrame, Message, WebSocket},
+    extract::ws::{CloseFrame, Message, WebSocket},
     Router,
 };
 use futures_util::{Future, SinkExt, StreamExt};
@@ -24,6 +24,7 @@ use tokio::{
     sync::{mpsc, oneshot},
 };
 use tower_http::trace::TraceLayer;
+use user::User;
 use uuid::Uuid;
 type PlayerId = usize;
 
@@ -34,7 +35,7 @@ static SESSION_TOKEN: &str = "SESSION_TOKEN";
 #[derive(Default)]
 struct AppState {
     lobbies: HashMap<Uuid, Lobby>,
-    users: HashMap<Uuid, Arc<str>>,
+    users: HashMap<Uuid, Arc<User>>,
     taken_user_names: HashSet<String>,
 }
 
@@ -43,12 +44,12 @@ mod user;
 
 impl AppState {
     /// Adds a new new user if the name is free. Returns the user's generated `Uuid` on success
-    fn new_user(&mut self, name: String) -> Option<Uuid> {
-        info!("new_user: {name}");
-        (!self.taken_user_names.contains(&name)).then(|| {
+    fn new_user(&mut self, user: User) -> Option<Uuid> {
+        info!("new_user: {}", user.name);
+        (!self.taken_user_names.contains(&user.name)).then(|| {
             let id = Uuid::new_v4();
-            self.taken_user_names.insert(name.clone());
-            self.users.insert(id, name.into());
+            self.taken_user_names.insert(user.name.clone());
+            self.users.insert(id, Arc::new(user));
             id
         })
     }
@@ -74,7 +75,7 @@ type SharedState = Arc<Mutex<AppState>>;
 pub enum Command {
     SendMessage(PlayerId, String),
     Join(
-        Arc<str>,
+        Arc<User>,
         oneshot::Sender<Result<(PlayerId, mpsc::Receiver<String>), String>>,
     ),
     GetData(oneshot::Sender<LobbyData>),
@@ -112,10 +113,10 @@ trait Ser: Serialize {
 }
 impl<T> Ser for T where T: Serialize {}
 
-async fn handle_socket(mut socket: WebSocket, tx: mpsc::Sender<Command>, user_name: Arc<str>) {
+async fn handle_socket(mut socket: WebSocket, tx: mpsc::Sender<Command>, user: Arc<User>) {
     let (oneshot_tx, oneshot_rx) = oneshot::channel();
 
-    tx.send(Command::Join(user_name, oneshot_tx)).await.unwrap();
+    tx.send(Command::Join(user, oneshot_tx)).await.unwrap();
     let res = oneshot_rx.await.unwrap();
 
     let (self_id, mut room_rx) = match res {

@@ -16,12 +16,12 @@
      id="layer3"
      style="display:inline">
     <path
-       style="display:inline;fill:#ffffff"
+       style="display:none;fill:#ffffff"
        id="path7"
        d="m 64.03045,192.81486 42.60718,73.79781 -85.214367,0 z"
        transform="matrix(0.05210216,0,0,0.06503738,0.89720867,-9.7184718)" />
     <path
-       style="display:none;fill:currentColor;fill-opacity:1;stroke-width:0.264583"
+       style="display:inline;fill:currentColor;fill-opacity:1;stroke-width:0.264583"
        d="M 39.648794,152.18074 V 69.321441 l -17.138511,12.534135 9.52662,10.440734 -7.604364,43.94155 z m 0,0 V 69.321441 l 17.138511,12.534135 -9.52662,10.440734 7.604364,43.94155 z"
        id="path9"
        transform="matrix(0.06440595,0,0,0.06440595,1.6797151,-1.500283)" />

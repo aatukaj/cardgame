@@ -69,10 +69,10 @@ async fn lobby_join(
         Some(lobby) => lobby.tx.clone(),
         None => return (StatusCode::NOT_FOUND, "Lobby doesn't exist").into_response(),
     };
-    let Some(user_name) = state.lock().users.get(&token).map(Arc::clone) else {
+    let Some(user) = state.lock().users.get(&token).map(Arc::clone) else {
         return (StatusCode::UNAUTHORIZED).into_response();
     };
-    ws.on_upgrade(move |socket| handle_socket(socket, tx, user_name))
+    ws.on_upgrade(move |socket| handle_socket(socket, tx, user))
 }
 
 pub fn routes() -> Router<SharedState> {

@@ -11,6 +11,7 @@ import { GameState } from '@bindings/GameState.ts';
 import { ChatMessage } from '@bindings/ChatMessage.ts';
 import { useParams } from 'react-router-dom';
 import PlayerInfoView from '../components/PlayerInfoView.tsx';
+import CardPile from '../components/CardPile.tsx';
 
 
 function CanPlayCard(topCard: Card | null, toPlay: Card): boolean {
@@ -28,23 +29,34 @@ function CanPlayCard(topCard: Card | null, toPlay: Card): boolean {
 export default function Game() {
   const [selection, setSelection] = useState<number | null>(null);
   const [gameState, setGameState] = useState<GameState>({
-    ownCards: [], topCard: null, turnIndex: 0, selfIndex: 0, users: [], direction: "Clockwise"
+    ownCards: [], topCard: null, turnIndex: 0, selfIndex: 0, users: [], direction: "Clockwise", cardsPlayed: 0
   });
   const { lobbyId } = useParams();
-  const { sendJsonMessage, lastJsonMessage } = useWebSocket(`ws://${window.location.host}/ws/${lobbyId}`, {onClose : (event) => {console.log(event)}});
+  const { sendJsonMessage, lastJsonMessage } = useWebSocket(`ws://${window.location.host}/ws/${lobbyId}`, { onClose: (event) => { console.log(event) } });
   const [messages, setMessages] = useState<ChatMessage[]>([]);
+
+  const [playedCards, setPlayedCards] = useState<Card[]>([]);
+
   useEffect(() => {
     if (lastJsonMessage !== null) {
       const data = lastJsonMessage as Response;
       console.log(data);
       if (data.tag === "GameState") {
-        setGameState(data.fields)
+        const newGameState = data.fields;
+
+        if (gameState.cardsPlayed != newGameState.cardsPlayed && newGameState.topCard != null) {
+          setPlayedCards(c => {const cards = [newGameState.topCard!, ...c]; cards.length = Math.min(cards.length, 4); return cards})
+        }
+        setGameState(newGameState)
       } else if (data.tag === "ChatMessage") {
         setMessages(m => m.concat(data.fields))
       }
 
     }
-  }, [lastJsonMessage]);
+  }, [lastJsonMessage, gameState.cardsPlayed]);
+
+
+
   const playCard = useCallback((color?: Color) => {
     if (selection === null) { return; }
     const selectedCard = gameState.ownCards[selection];
@@ -71,12 +83,12 @@ export default function Game() {
       <div className='w-full h-full flex flex-row place-content-between gap-4'>
         <div className='flex flex-col place-content-between h-full w-2/3'>
           <div className='flex flex-row place-content-evenly'>
-            {gameState.users.filter((_, i) => i != gameState.selfIndex).map((p, i) => <PlayerInfoView playerInfo={p} key={i}/>)}
+            {gameState.users.filter((_, i) => i != gameState.selfIndex).map((p, i) => <PlayerInfoView playerInfo={p} key={i} />)}
           </div>
           <div className='self-center relative flex z-0'>
             <div onClick={() => { if (!showColorSelector) { playCard() } }}
-              className={`z-10 w-24 h-36 border-zinc-500 border-dashed rounded-lg border-2 flex flex-row justify-center items-center ${selection === null || showColorSelector ? "" : CanPlayCard(gameState.topCard, gameState.ownCards[selection]) ? "cursor-pointer" : "cursor-not-allowed"}`}>
-              {gameState.topCard !== null ? <CardView card={gameState.topCard}></CardView> : <></>}
+              className={`z-10 w-24 h-36 border-zinc-500 border-dashed rounded-lg border-2 flex flex-row justify-center items-center ${selection === null || showColorSelector ? "" : gameState.turnIndex == gameState.selfIndex && CanPlayCard(gameState.topCard, gameState.ownCards[selection]) ? "cursor-pointer" : "cursor-not-allowed"}`}>
+              {gameState.topCard !== null ? <CardPile cards={playedCards} offset={gameState.cardsPlayed}/> : <></>}
             </div>
 
 

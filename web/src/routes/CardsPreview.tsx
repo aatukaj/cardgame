@@ -2,8 +2,19 @@ import { Card } from "@bindings/Card";
 import CardView from "../components/CardView";
 
 import PlayerInfoView from "../components/PlayerInfoView";
+import CardPile from "../components/CardPile";
+import { useEffect, useState } from "react";
 
 export default function CardsPreview() {
+    const [pileOffset, setPileOffset] = useState(0);
+    useEffect(() => {
+        const interval = setInterval(() => {
+          setPileOffset(i => i + 1)
+        }, 1000);
+        return () => clearInterval(interval);
+      }, []);
+
+
     const cards: Card[] = []
     for (const color of ["Red", "Green", "Yellow", "Blue", "None"] as const) {
         for (let i = 0; i <= 9; i++) {
@@ -38,20 +49,9 @@ export default function CardsPreview() {
     return (
         <div className="flex flex-row w-full h-full flex-wrap gap-2">
             {cards.map((c, i) => <CardView card={c} key={i} />)}
-            <PlayerInfoView playerInfo={{ userName: "bob", cardCount: 12 }} />
-            <PlayerInfoView playerInfo={{ userName: "boberto", cardCount: 5 }} />
-            <div className="relative">
-                <div className="absolute brightness-75">
-                    <CardView card={cards[0]} />
-                </div>
-                <div className="absolute rotate-12 brightness-90">
-                    <CardView card={cards[15]} />
-                </div>
-                <div className="absolute -rotate-6">
-                    <CardView card={cards[37]} />
-                </div>
-
-            </div>
+            <PlayerInfoView playerInfo={{ user: { name: "bob", eyeColorIndex: 0, eyeIndex: 0, tieColorIndex: 0, tieIndex: 0 }, cardCount: 12 }} />
+            <PlayerInfoView playerInfo={{ user: { name: "lsob", eyeColorIndex: 0, eyeIndex: 0, tieColorIndex: 0, tieIndex: 0 }, cardCount: 5 }} />
+            <CardPile cards={[cards[0], cards[19], cards[50], cards[3]]} offset={pileOffset} />
         </div>
     )
 

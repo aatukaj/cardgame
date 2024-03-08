@@ -2,7 +2,6 @@ use std::sync::Arc;
 
 use futures_util::future::join_all;
 use indexmap::IndexMap;
-
 use rand::seq::SliceRandom;
 use tokio::sync::mpsc;
 use tracing::{error, info};
@@ -10,11 +9,10 @@ use uuid::Uuid;
 
 use crate::{
     game::{CardKind, Color, Player, State},
-    game_messages::{ChatMessage, GameState, Response, UserData},
+    game_messages::{ChatMessage, GameState, PlayerInfo, Response},
+    user::User,
     Command, LobbyData, PlayerId, Ser,
 };
-
-
 
 pub struct RoomActor {
     name: String,
@@ -24,6 +22,7 @@ pub struct RoomActor {
     next_id: usize,
     id: Uuid,
     rx: mpsc::Receiver<Command>,
+    cards_played: usize,
 }
 impl RoomActor {
     pub fn spawn_new(name: String, max_players: usize) -> (mpsc::Sender<Command>, Uuid) {
@@ -36,12 +35,12 @@ impl RoomActor {
             rx,
             id,
             players: IndexMap::new(),
-            max_players
+            max_players,
+            cards_played: 0,
         };
         tokio::spawn(room.run());
         (tx, id)
     }
-
 
     async fn broadcast_message(&self, message: ChatMessage<'_>) {
         let data = Response::ChatMessage(message).ser();
@@ -52,13 +51,14 @@ impl RoomActor {
         )
         .await;
     }
+
     async fn broadcast_gamestate(&self, game_state: &State) {
         let top_card = game_state.played_cards.last();
-        let player_data: Vec<UserData> = self
+        let player_data: Vec<PlayerInfo> = self
             .players
             .values()
-            .map(|p| UserData {
-                user_name: &p.user_name,
+            .map(|p| PlayerInfo {
+                user: &p.user,
                 card_count: p.cards.len(),
             })
             .collect();
@@ -71,6 +71,7 @@ impl RoomActor {
                     top_card,
                     self_index: i,
                     direction: game_state.turn_direction,
+                    cards_played: self.cards_played,
                 })
                 .ser(),
             )
@@ -117,8 +118,7 @@ impl RoomActor {
                         game_state.next_turn(&mut self);
                         self.broadcast_gamestate(&game_state).await;
                     }
-                    
-                },
+                }
                 Command::Shutdown => break,
                 Command::Noop => (),
             };
@@ -156,10 +156,10 @@ impl RoomActor {
             })
             .is_some_and(|c| game_state.can_play(c))
         {
-            game_state
-                .played_cards
-                .push(player.cards.remove(card_index));
+            game_state.place_card(player.cards.remove(card_index));
             game_state.next_turn(self);
+
+            self.cards_played += 1;
             self.broadcast_gamestate(game_state).await;
         }
     }
@@ -176,14 +176,14 @@ impl RoomActor {
                 p.cards = game_state
                     .unplayed_cards
                     .split_off(game_state.unplayed_cards.len() - 7);
-                info!("{} got cards: {:?}", p.user_name, p.cards);
+                info!("{} got cards: {:?}", p.user.name, p.cards);
             }
             self.game_started = true;
             self.broadcast_gamestate(game_state).await;
         }
         self.broadcast_message(ChatMessage {
             content: &content,
-            user_name: (self.players.get(&user_id).unwrap().user_name).as_ref(),
+            user_name: &(self.players.get(&user_id).unwrap().user).name,
         })
         .await;
     }
@@ -192,7 +192,7 @@ impl RoomActor {
         &mut self,
         sender: tokio::sync::oneshot::Sender<Result<(usize, mpsc::Receiver<String>), String>>,
         game_state: &State,
-        user_name: Arc<str>,
+        user: Arc<User>,
     ) {
         if self.game_started {
             sender.send(Err("Already started".into())).unwrap();
@@ -202,20 +202,23 @@ impl RoomActor {
             let (tx, rx) = mpsc::channel(1);
             sender.send(Ok((self.next_id, rx))).unwrap();
 
-     
-
             self.players.insert(
                 self.next_id,
                 Player {
                     cards: Vec::new(),
                     tx,
-                    user_name: Arc::clone(&user_name),
+                    user: Arc::clone(&user),
                 },
             );
             self.next_id += 1;
 
             self.broadcast_message(ChatMessage {
-                content: &format!("{user_name} joined! {}/{} players.", self.players.len(), self.max_players),
+                content: &format!(
+                    "{} joined! {}/{} players.",
+                    &user.name,
+                    self.players.len(),
+                    self.max_players
+                ),
                 user_name: "SERVER".into(),
             })
             .await;

@@ -1176,8 +1176,7 @@ dependencies = [
 [[package]]
 name = "ts-rs"
 version = "7.1.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "fc2cae1fc5d05d47aa24b64f9a4f7cba24cdc9187a2084dd97ac57bef5eccae6"
+source = "git+https://github.com/Aleph-Alpha/ts-rs#676cc6eff04f748d0d062d9db026f2c672bc59d7"
 dependencies = [
  "thiserror",
  "ts-rs-macros",
@@ -1187,8 +1186,7 @@ dependencies = [
 [[package]]
 name = "ts-rs-macros"
 version = "7.1.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "73f7f9b821696963053a89a7bd8b292dc34420aea8294d7b225274d488f3ec92"
+source = "git+https://github.com/Aleph-Alpha/ts-rs#676cc6eff04f748d0d062d9db026f2c672bc59d7"
 dependencies = [
  "Inflector",
  "proc-macro2",

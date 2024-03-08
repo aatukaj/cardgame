@@ -1,17 +1,22 @@
 /// <reference types="vite-plugin-svgr/client" />
 
-import { UserData } from "@bindings/UserData";
+import { PlayerInfo } from "@bindings/PlayerInfo";
 
 
 
 import UICard from "./UICard";
 import Avatar from "./Avatar";
 
-export default function PlayerInfoView({ playerInfo }: { playerInfo: UserData }) {
+export default function PlayerInfoView({ playerInfo }: { playerInfo: PlayerInfo }) {
     return (<div>
-        <Avatar eyeColorIndex={2} eyeIndex={0} tieColorIndex={2} tieIndex={0} />
+        <Avatar
+            eyeColorIndex={playerInfo.user.eyeColorIndex} 
+            eyeIndex={playerInfo.user.eyeIndex} 
+            tieColorIndex={playerInfo.user.tieColorIndex} 
+            tieIndex={playerInfo.user.tieIndex}
+        />
         <UICard>
-            <UICard.Header>{playerInfo.userName}</UICard.Header>
+            <UICard.Header>{playerInfo.user.name}</UICard.Header>
             <UICard.Body>Cards: {playerInfo.cardCount}</UICard.Body>
         </UICard>
 
