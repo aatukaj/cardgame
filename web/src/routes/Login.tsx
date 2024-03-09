@@ -4,16 +4,22 @@ import { User } from "@bindings/User";
 import { useEffect, useState } from "react";
 import Avatar from "../components/Avatar";
 
-import { EYES, TIES } from "../assets/avatar";
+import { AVATAR_COLORS, EYES, TIES } from "../assets/avatar";
 import ColorPalette from "../components/ColorPalette";
-
+import { randInt } from "../util";
 export default function LoginPage() {
     const navigate = useNavigate();
     const [eyeIndex, setEyeIndex] = useState(0);
     const [tieIndex, setTieIndex] = useState(0);
     const [eyeColorIndex, setEyeColorIndex] = useState(0);
     const [tieColorIndex, setTieColorIndex] = useState(0);
+    function randomize() {
+        setEyeIndex(randInt(EYES.length))
+        setTieIndex(randInt(TIES.length))
+        setTieColorIndex(randInt(AVATAR_COLORS.length))
+        setEyeColorIndex(randInt(AVATAR_COLORS.length))
 
+    }
     function onSubmit(event: React.FormEvent<HTMLFormElement>, eyeColorIndex: number, tieColorIndex: number, eyeIndex: number, tieIndex: number) {
         event.preventDefault();
         const formData = new FormData(event.currentTarget);
@@ -56,7 +62,6 @@ export default function LoginPage() {
     }
 
     return <div className="flex flex-row justify-center items-center size-full gap-1">
-        <ColorPalette title="Eye" onClick={setEyeColorIndex} />
         <UICard>
             <UICard.Header>
                 Login
@@ -75,11 +80,16 @@ export default function LoginPage() {
                     </div>
                 </UICard.Body>
                 <UICard.Footer>
-                    <input type='submit' value='Continue' className=' w-full h-8 bg-green-500 border  border-green-400 px-2' />
+                    <div className="flex w-full gap-1 justify-items-stretch h-8">
+                        <button onClick={(e) => { e.preventDefault(); randomize(); }} className="text-xl h-full bg-blue-500 border border-blue-400 text-center">🎲</button>
+                        <input type='submit' value='Continue' className='grow h-full bg-green-500 border  border-green-400' />
+                    </div>
                 </UICard.Footer>
             </form>
         </UICard>
-        <ColorPalette title="Tie" onClick={setTieColorIndex} />
-
+        <div className="relative">
+            <ColorPalette className="absolute bottom-0" selected={eyeColorIndex} title="Eye" onClick={setEyeColorIndex} />
+            <ColorPalette className="absolute top-0 mt-0.5" selected={tieColorIndex} title="Tie" onClick={setTieColorIndex} />
+        </div>
     </div>
 }

@@ -9,10 +9,10 @@ export default function CardsPreview() {
     const [pileOffset, setPileOffset] = useState(0);
     useEffect(() => {
         const interval = setInterval(() => {
-          setPileOffset(i => i + 1)
+            setPileOffset(i => i + 1)
         }, 1000);
         return () => clearInterval(interval);
-      }, []);
+    }, []);
 
 
     const cards: Card[] = []

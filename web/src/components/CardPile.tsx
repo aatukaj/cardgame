@@ -7,13 +7,11 @@ const OPACITIES = ["brightness-100", "brightness-75", "brightness-50", "brightne
 
 // 0 index is the top card
 export default function CardPile({ cards, offset }: { cards: Card[], offset: number }) {
-
     return (
-        <div className="relative">
-            {cards.map((c, i) => <div key={i - offset} className={twJoin("absolute", TRANSFORMS[(i - offset) % TRANSFORMS.length], OPACITIES[i])}>
+        <div className="grid grid-cols-1 grid-rows-1">
+            {cards.map((c, i) => <div key={offset - i} className={twJoin("row-start-1 col-start-1", TRANSFORMS[(offset - i) % TRANSFORMS.length], OPACITIES[i])}>
                 <CardView card={c} />
             </div>).reverse()}
         </div>
-
     )
 }

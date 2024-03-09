@@ -6,4 +6,8 @@ export const COLOR_TO_BG: Record<Color, string> = {
     "Green": "bg-green-500",
     "Blue": "bg-blue-500",
     "None": "bg-zinc-500",
-  }
+}
+
+export function randInt(end: number): number {
+    return Math.floor(Math.random() * end)
+}

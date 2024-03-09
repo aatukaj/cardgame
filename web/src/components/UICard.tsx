@@ -1,7 +1,8 @@
+import { twMerge } from "tailwind-merge"
 
 
-export default function UICard({ children }: { children: React.ReactNode }) {
-    return <div className="bg-zinc-900 border border-zinc-700">
+export default function UICard({ children, className }: { children: React.ReactNode, className?: string }) {
+    return <div className={twMerge("bg-zinc-900 border border-zinc-700", className)}>
         {children}
     </div>
 }

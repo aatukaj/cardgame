@@ -13,18 +13,30 @@ use ts_rs::TS;
 
 use crate::{token_extractor::SessionToken, SharedState, SESSION_TOKEN};
 
-
-#[derive(Deserialize, Serialize, Clone, Debug, TS)]
+#[derive(Deserialize, Serialize, Debug, TS, Clone)]
 #[serde(rename_all = "camelCase")]
 #[ts(export)]
 pub struct User {
+    pub id: usize,
     pub name: String,
+    pub avatar: Avatar,
+}
+
+#[derive(Deserialize, TS, Debug, Serialize, Clone)]
+#[ts(export)]
+pub struct Avatar {
     pub tie_index: usize,
     pub tie_color_index: usize,
     pub eye_index: usize,
     pub eye_color_index: usize,
 }
 
+#[derive(Deserialize, TS)]
+#[ts(export)]
+pub struct UserCreate {
+    pub name: String,
+    pub avatar: Avatar,
+}
 async fn login(
     jar: CookieJar,
     State(state): State<SharedState>,
@@ -44,7 +56,6 @@ async fn login(
     }
 }
 
-
 async fn whoami(
     SessionToken(token): SessionToken,
     State(state): State<SharedState>,
@@ -53,9 +64,7 @@ async fn whoami(
         .lock()
         .users
         .get(&token)
-        .map(|n| {
-            Json(n.as_ref().clone())
-        })
+        .map(|n| Json(n.as_ref().clone()))
         .ok_or(StatusCode::UNAUTHORIZED)
 }
 

@@ -12,7 +12,8 @@ import { ChatMessage } from '@bindings/ChatMessage.ts';
 import { useParams } from 'react-router-dom';
 import PlayerInfoView from '../components/PlayerInfoView.tsx';
 import CardPile from '../components/CardPile.tsx';
-
+import { twJoin } from 'tailwind-merge';
+import { ArrowPathIcon } from "@heroicons/react/24/outline"
 
 function CanPlayCard(topCard: Card | null, toPlay: Card): boolean {
   if (topCard === null || toPlay.kind.tag === "Special" || topCard.color === toPlay.color) {
@@ -44,8 +45,8 @@ export default function Game() {
       if (data.tag === "GameState") {
         const newGameState = data.fields;
 
-        if (gameState.cardsPlayed != newGameState.cardsPlayed && newGameState.topCard != null) {
-          setPlayedCards(c => {const cards = [newGameState.topCard!, ...c]; cards.length = Math.min(cards.length, 4); return cards})
+        if (gameState.cardsPlayed !== newGameState.cardsPlayed && newGameState.topCard !== null) {
+          setPlayedCards(c => { const cards = [newGameState.topCard!, ...c]; cards.length = Math.min(cards.length, 4); return cards })
         }
         setGameState(newGameState)
       } else if (data.tag === "ChatMessage") {
@@ -64,12 +65,12 @@ export default function Game() {
       if (color) {
         selectedCard.color = color
       }
-      setGameState({
-        ...gameState,
-        topCard: selectedCard,
-        ownCards: gameState.ownCards.filter((_, i) => i !== selection),
-
-      })
+      //     setGameState({
+      //       ...gameState,
+      //       topCard: selectedCard,
+      //       ownCards: gameState.ownCards.filter((_, i) => i !== selection),
+      //
+      //     })
 
       sendJsonMessage<Request>({ tag: "PlayCard", fields: [selection, color || "None"] })
       setSelection(null);
@@ -77,7 +78,7 @@ export default function Game() {
   }, [selection, sendJsonMessage, gameState])
 
   const showColorSelector = gameState.ownCards[selection!]?.kind.tag === "Special";
-
+  const ownTurn = gameState.turnIndex == gameState.selfIndex;
   return (
     <>
       <div className='w-full h-full flex flex-row place-content-between gap-4'>
@@ -87,14 +88,16 @@ export default function Game() {
           </div>
           <div className='self-center relative flex z-0'>
             <div onClick={() => { if (!showColorSelector) { playCard() } }}
-              className={`z-10 w-24 h-36 border-zinc-500 border-dashed rounded-lg border-2 flex flex-row justify-center items-center ${selection === null || showColorSelector ? "" : gameState.turnIndex == gameState.selfIndex && CanPlayCard(gameState.topCard, gameState.ownCards[selection]) ? "cursor-pointer" : "cursor-not-allowed"}`}>
-              {gameState.topCard !== null ? <CardPile cards={playedCards} offset={gameState.cardsPlayed}/> : <></>}
+              className={twJoin("z-10 w-24 h-36 border-zinc-500 border-dashed rounded-lg border-2 flex flex-row justify-center items-center ",
+                !(selection === null || showColorSelector)
+                && (ownTurn && CanPlayCard(gameState.topCard, gameState.ownCards[selection]) ? "cursor-pointer" : "cursor-not-allowed"))}>
+              {<CardPile cards={playedCards} offset={gameState.cardsPlayed} />}
             </div>
 
 
-            {showColorSelector ? <div className='z-20 absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2'>
+            {showColorSelector && <div className='z-20 absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2'>
               <RadialColorSelector onClick={playCard} />
-            </div> : <></>}
+            </div>}
 
           </div>
           <div className='overflow-y-auto pt-4 px-2 h-2/5 bg-zinc-900 border border-zinc-700'>

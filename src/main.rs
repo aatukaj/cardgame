@@ -5,7 +5,7 @@ mod token_extractor;
 use std::{
     collections::{HashMap, HashSet},
     io::Error,
-    sync::Arc,
+    sync::{atomic::AtomicUsize, Arc},
 };
 
 use axum::{
@@ -32,6 +32,7 @@ use tracing::{self, info};
 use tracing_subscriber;
 
 static SESSION_TOKEN: &str = "SESSION_TOKEN";
+static NEXT_USER_ID: AtomicUsize = AtomicUsize::new(0);
 #[derive(Default)]
 struct AppState {
     lobbies: HashMap<Uuid, Lobby>,
@@ -96,7 +97,6 @@ async fn main() -> Result<(), Error> {
     let listener = TcpListener::bind("localhost:8080").await.unwrap();
 
     let state = SharedState::default();
-
     let app = Router::new()
         .nest("/user", user::routes())
         .nest("/lobbies", lobby::routes())

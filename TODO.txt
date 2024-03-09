@@ -10,6 +10,6 @@
 
 [x] login and session token, username, cookiesss
 [ ] multiple cards played in one turn
-[ ] avatars
+[x] avatars
 [ ] seperate pre-start screen for lobbies, shows current players and empty
 [ ] switch to react router's Form elements
