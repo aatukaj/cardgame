@@ -10,7 +10,6 @@ pub use player::*;
 mod card;
 pub use card::*;
 
-
 pub struct State {
     pub played_cards: Vec<Card>,
     pub unplayed_cards: Vec<Card>,
@@ -95,11 +94,11 @@ impl State {
         }
         self.played_cards.push(card)
     }
+    pub fn can_place(&self, card: &Card) -> bool {
+        card.color != Color::None && self.can_play(card)
+    }
 
     pub fn can_play(&self, card: &Card) -> bool {
-        if card.color == Color::None {
-            return false;
-        }
         let Some(top) = self.played_cards.last() else {
             return true;
         };
@@ -153,33 +152,48 @@ impl Default for State {
     }
 }
 
-
 #[cfg(test)]
 mod tests {
     use super::*;
     #[test]
     fn test_draw_card_unplayed_empty() {
         let mut state = State {
-            played_cards: vec![Card::block(Color::Red), Card::block(Color::Blue), Card::block(Color::Yellow)],
+            played_cards: vec![
+                Card::block(Color::Red),
+                Card::block(Color::Blue),
+                Card::block(Color::Yellow),
+            ],
             unplayed_cards: vec![],
             ..Default::default()
         };
         let drawn = state.draw_card();
         assert_eq!(state.played_cards, vec![Card::block(Color::Yellow)]);
         assert!(state.unplayed_cards.len() == 1);
-        assert!(matches!(drawn.color,  Color::Red | Color::Blue))
+        assert!(matches!(drawn.color, Color::Red | Color::Blue))
     }
 
     #[test]
     fn test_draw_card_unplayed_non_empty() {
         let mut state = State {
-            played_cards: vec![Card::block(Color::Red), Card::block(Color::Blue), Card::block(Color::Yellow)],
+            played_cards: vec![
+                Card::block(Color::Red),
+                Card::block(Color::Blue),
+                Card::block(Color::Yellow),
+            ],
             unplayed_cards: vec![Card::block(Color::Green)],
             ..Default::default()
         };
         let drawn = state.draw_card();
-        assert_eq!(state.played_cards, vec![Card::block(Color::Red), Card::block(Color::Blue), Card::block(Color::Yellow)]);
+        assert_eq!(
+            state.played_cards,
+            vec![
+                Card::block(Color::Red),
+                Card::block(Color::Blue),
+                Card::block(Color::Yellow)
+            ]
+        );
         assert!(state.unplayed_cards.is_empty());
         assert_eq!(drawn, Card::block(Color::Green))
     }
 }
+

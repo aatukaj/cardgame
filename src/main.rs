@@ -5,7 +5,7 @@ mod token_extractor;
 use std::{
     collections::{HashMap, HashSet},
     io::Error,
-    sync::{atomic::AtomicUsize, Arc},
+    sync::Arc,
 };
 
 use axum::{
@@ -24,7 +24,7 @@ use tokio::{
     sync::{mpsc, oneshot},
 };
 use tower_http::trace::TraceLayer;
-use user::User;
+use user::{User, UserCreate};
 use uuid::Uuid;
 type PlayerId = usize;
 
@@ -32,25 +32,33 @@ use tracing::{self, info};
 use tracing_subscriber;
 
 static SESSION_TOKEN: &str = "SESSION_TOKEN";
-static NEXT_USER_ID: AtomicUsize = AtomicUsize::new(0);
 #[derive(Default)]
 struct AppState {
     lobbies: HashMap<Uuid, Lobby>,
     users: HashMap<Uuid, Arc<User>>,
     taken_user_names: HashSet<String>,
+    next_user_id: usize,
 }
 
 mod lobby;
 mod user;
 
 impl AppState {
-    /// Adds a new new user if the name is free. Returns the user's generated `Uuid` on success
-    fn new_user(&mut self, user: User) -> Option<Uuid> {
+    /// Adds a new new user if the name is free. Returns the user's generated session token on success
+    fn new_user(&mut self, user: UserCreate) -> Option<Uuid> {
         info!("new_user: {}", user.name);
         (!self.taken_user_names.contains(&user.name)).then(|| {
             let id = Uuid::new_v4();
             self.taken_user_names.insert(user.name.clone());
-            self.users.insert(id, Arc::new(user));
+            self.users.insert(
+                id,
+                Arc::new(User {
+                    id: self.next_user_id,
+                    name: user.name,
+                    avatar: user.avatar,
+                }),
+            );
+            self.next_user_id += 1;
             id
         })
     }
@@ -82,6 +90,7 @@ pub enum Command {
     GetData(oneshot::Sender<LobbyData>),
     Leave(PlayerId),
     PlayCard(PlayerId, usize, Color),
+    PlayCards(PlayerId, Vec<usize>),
     TakeCard(PlayerId),
     Shutdown,
     Noop,
@@ -143,8 +152,9 @@ async fn handle_socket(mut socket: WebSocket, tx: mpsc::Sender<Command>, user: A
                         let Ok(i) = serde_json::from_str::<Request>(&txt) else {break;};
                         tx.send(match i {
                             Request::SendMessage{content} => Command::SendMessage(self_id, content),
-                            Request::PlayCard(i, c) => Command::PlayCard(self_id, i, c),
+                            Request::PlaySpecialCard(i, c) => Command::PlayCard(self_id, i, c),
                             Request::TakeCard => Command::TakeCard(self_id),
+                        Request::PlayCards(cards) => Command::PlayCards(self_id, cards)
                         }).await.unwrap();
                     },
                     Message::Close(_) => {

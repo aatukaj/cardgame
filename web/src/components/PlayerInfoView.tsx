@@ -10,10 +10,10 @@ import Avatar from "./Avatar";
 export default function PlayerInfoView({ playerInfo }: { playerInfo: PlayerInfo }) {
     return (<div>
         <Avatar
-            eyeColorIndex={playerInfo.user.eyeColorIndex} 
-            eyeIndex={playerInfo.user.eyeIndex} 
-            tieColorIndex={playerInfo.user.tieColorIndex} 
-            tieIndex={playerInfo.user.tieIndex}
+            eyeColorIndex={playerInfo.user.avatar.eyeColorIndex}
+            eyeIndex={playerInfo.user.avatar.eyeIndex}
+            tieColorIndex={playerInfo.user.avatar.tieColorIndex}
+            tieIndex={playerInfo.user.avatar.tieIndex}
         />
         <UICard>
             <UICard.Header>{playerInfo.user.name}</UICard.Header>

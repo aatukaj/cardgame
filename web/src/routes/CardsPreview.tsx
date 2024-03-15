@@ -1,5 +1,5 @@
 import { Card } from "@bindings/Card";
-import CardView from "../components/CardView";
+import CardView, { UnplayedCardView } from "../components/CardView";
 
 import PlayerInfoView from "../components/PlayerInfoView";
 import CardPile from "../components/CardPile";
@@ -52,6 +52,7 @@ export default function CardsPreview() {
             <PlayerInfoView playerInfo={{ user: { name: "bob", eyeColorIndex: 0, eyeIndex: 0, tieColorIndex: 0, tieIndex: 0 }, cardCount: 12 }} />
             <PlayerInfoView playerInfo={{ user: { name: "lsob", eyeColorIndex: 0, eyeIndex: 0, tieColorIndex: 0, tieIndex: 0 }, cardCount: 5 }} />
             <CardPile cards={[cards[0], cards[19], cards[50], cards[3]]} offset={pileOffset} />
+            <UnplayedCardView />
         </div>
     )
 

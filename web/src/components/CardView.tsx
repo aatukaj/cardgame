@@ -23,12 +23,12 @@ function SpecialCardInner({ kind }: { kind: SpecialCardKind }) {
     }
 }
 
-function CardView({ card, selected = false, hover = false }: { card: Card, selected?: boolean, hover?: boolean }) {
+export default function CardView({ card, selected = false, hover = false }: { card: Card, selected?: boolean, hover?: boolean }) {
     const color = COLOR_TO_BG[card.color];
     const cname = twJoin(
-        card.kind.tag === "Normal" ? color : "bg-black", 
-        selected && "shadow-md shadow-white", 
-        hover && "hover:-translate-y-2", 
+        card.kind.tag === "Normal" ? color : "bg-black",
+        selected && "ring-2 ring-offset-2 ring-offset-zinc-900 ring-white/50",
+        hover && "hover:-translate-y-2",
         "w-20 h-32 relative rounded-md border-white-0 border-4 text-center flex flex-col justify-center text-white font-bold text-4xl items-center transition-all select-none")
     return (
         <div className={cname}>
@@ -43,7 +43,13 @@ function CardView({ card, selected = false, hover = false }: { card: Card, selec
         </div>
     )
 }
-export default CardView
 
+export function UnplayedCardView({ onClick }: { onClick?: () => void }) {
+    return (
+        <div onClick={onClick} className='w-20 h-32 border-white-0 border-4 bg-zinc-950 rounded-md p-2'>
+            <div className='inline-block size-full bg-zinc-900 rounded-md text-center align-middle'>Draw<br />Card</div>
+        </div>
+    )
+}
 
 

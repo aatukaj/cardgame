@@ -21,8 +21,23 @@ pub struct User {
     pub name: String,
     pub avatar: Avatar,
 }
+impl User {
+    pub fn new_empty() -> Self {
+        User {
+            id: 0,
+            name: "".into(),
+            avatar: Avatar {
+                tie_index: 0,
+                tie_color_index: 0,
+                eye_index: 0,
+                eye_color_index: 0,
+            },
+        }
+    }
+}
 
 #[derive(Deserialize, TS, Debug, Serialize, Clone)]
+#[serde(rename_all = "camelCase")]
 #[ts(export)]
 pub struct Avatar {
     pub tie_index: usize,
@@ -40,7 +55,7 @@ pub struct UserCreate {
 async fn login(
     jar: CookieJar,
     State(state): State<SharedState>,
-    Json(input): Json<User>,
+    Json(input): Json<UserCreate>,
 ) -> Result<CookieJar, (StatusCode, &'static str)> {
     if let Some(id) = state.lock().new_user(input) {
         let cookie = Cookie::build((SESSION_TOKEN, id.to_string()))

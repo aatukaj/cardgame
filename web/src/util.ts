@@ -11,3 +11,7 @@ export const COLOR_TO_BG: Record<Color, string> = {
 export function randInt(end: number): number {
     return Math.floor(Math.random() * end)
 }
+
+export function last<T>(ls: T[]): T {
+    return ls[ls.length - 1]
+}

@@ -8,7 +8,7 @@ use tracing::{error, info};
 use uuid::Uuid;
 
 use crate::{
-    game::{CardKind, Color, Player, State},
+    game::{Card, CardKind, Color, Player, State},
     game_messages::{ChatMessage, GameState, PlayerInfo, Response},
     user::User,
     Command, LobbyData, PlayerId, Ser,
@@ -102,7 +102,8 @@ impl RoomActor {
                         .await;
                 }
                 Command::PlayCard(user_id, i, c) => {
-                    self.handle_play_card(&mut game_state, user_id, i, c).await;
+                    self.handle_play_special_card(&mut game_state, user_id, i, c)
+                        .await;
                 }
                 Command::Leave(user_id) => {
                     if let Some(p) = self.players.shift_remove(&user_id) {
@@ -110,18 +111,25 @@ impl RoomActor {
                     }
                 }
                 Command::TakeCard(user_id) => {
-                    if let Some(p) = self
-                        .get_mut_player_if_turn(&user_id, &game_state)
-                        .filter(|p| p.can_play_card(&game_state))
-                    {
-                        p.cards.push(game_state.draw_card());
-                        game_state.next_turn(&mut self);
-                        self.broadcast_gamestate(&game_state).await;
-                    }
+                    self.handle_take_card(&user_id, &mut game_state).await
+                }
+                Command::PlayCards(user_id, cards_ids) => {
+                    self.handle_play_cards(&user_id, &mut game_state, cards_ids)
+                        .await;
                 }
                 Command::Shutdown => break,
                 Command::Noop => (),
             };
+        }
+    }
+    async fn handle_take_card(&mut self, player_id: &PlayerId, game_state: &mut State) {
+        if let Some(p) = self
+            .get_mut_player_if_turn(&player_id, &game_state)
+            .filter(|p| !p.can_play_card(&game_state))
+        {
+            p.cards.push(game_state.draw_card());
+            game_state.next_turn(self);
+            self.broadcast_gamestate(&game_state).await;
         }
     }
     fn get_mut_player_if_turn(
@@ -133,7 +141,7 @@ impl RoomActor {
             .get_index_mut(game_state.turn_index)
             .and_then(|(id, p)| (id == player_id).then_some(p))
     }
-    async fn handle_play_card(
+    async fn handle_play_special_card(
         &mut self,
         game_state: &mut State,
         user_id: usize,
@@ -141,29 +149,36 @@ impl RoomActor {
         new_color: Color,
     ) {
         let Some(player) = self.get_mut_player_if_turn(&user_id, &game_state) else {
-            error!("Player does not exist");
             return;
         };
         if player
             .cards
-            .get_mut(card_index)
-            .map(|c| match c.kind {
-                CardKind::Special(_) => {
-                    c.color = new_color;
-                    c
-                }
-                CardKind::Normal(_) => c,
-            })
-            .is_some_and(|c| game_state.can_play(c))
+            .get(card_index)
+            .is_some_and(|c| matches!(c.kind, CardKind::Special(_)))
         {
-            game_state.place_card(player.cards.remove(card_index));
+            let mut card = player.cards.remove(card_index);
+            card.color = new_color;
+            game_state.place_card(card);
             game_state.next_turn(self);
 
             self.cards_played += 1;
             self.broadcast_gamestate(game_state).await;
         }
     }
-
+    async fn start(&mut self, game_state: &mut State) {
+        info!("STARTED");
+        for p in self.players.values_mut() {
+            p.cards = game_state
+                .unplayed_cards
+                .split_off(game_state.unplayed_cards.len() - 7);
+            info!("{} got cards: {:?}", p.user.name, p.cards);
+        }
+        self.game_started = true;
+        let top_card = game_state.draw_card();
+        game_state.place_card(top_card);
+        self.cards_played = 1;
+        self.broadcast_gamestate(game_state).await;
+    }
     async fn handle_send_message(
         &mut self,
         content: String,
@@ -171,15 +186,7 @@ impl RoomActor {
         user_id: usize,
     ) {
         if !self.game_started && content.trim() == "/start" {
-            info!("STARTED");
-            for p in self.players.values_mut() {
-                p.cards = game_state
-                    .unplayed_cards
-                    .split_off(game_state.unplayed_cards.len() - 7);
-                info!("{} got cards: {:?}", p.user.name, p.cards);
-            }
-            self.game_started = true;
-            self.broadcast_gamestate(game_state).await;
+            self.start(game_state).await;
         }
         self.broadcast_message(ChatMessage {
             content: &content,
@@ -224,5 +231,32 @@ impl RoomActor {
             .await;
             self.broadcast_gamestate(game_state).await;
         };
+    }
+
+    async fn handle_play_cards(
+        &mut self,
+        user_id: &usize,
+        game_state: &mut State,
+        card_indeces: Vec<usize>,
+    ) {
+        let Some(player) = self.get_mut_player_if_turn(user_id, game_state) else {
+            return;
+        };
+        if !player.can_play_consecutive_cards(game_state, &card_indeces) {
+            return;
+        }
+        // The player can actually play all the cards in cards_ids
+        for &i in &card_indeces {
+            game_state.place_card(player.cards[i].clone())
+        }
+        let len = card_indeces.len();
+        let mut index = 0;
+        player.cards.retain(|_| {
+            index += 1;
+            !card_indeces.contains(&(index - 1))
+        });
+        game_state.next_turn(self);
+        self.cards_played += len;
+        self.broadcast_gamestate(game_state).await;
     }
 }

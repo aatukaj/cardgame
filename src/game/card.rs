@@ -48,21 +48,39 @@ pub struct Card {
 #[allow(unused)]
 impl Card {
     pub fn number(num: u8, color: Color) -> Self {
-        Self { color, kind: CardKind::Normal(NormalCardKind::Number(num)) }
+        Self {
+            color,
+            kind: CardKind::Normal(NormalCardKind::Number(num)),
+        }
     }
     pub fn reverse(color: Color) -> Self {
-        Self { color, kind: CardKind::Normal(NormalCardKind::Reverse) }
+        Self {
+            color,
+            kind: CardKind::Normal(NormalCardKind::Reverse),
+        }
     }
     pub fn plus_two(color: Color) -> Self {
-        Self { color, kind: CardKind::Normal(NormalCardKind::PlusTwo) }
+        Self {
+            color,
+            kind: CardKind::Normal(NormalCardKind::PlusTwo),
+        }
     }
     pub fn block(color: Color) -> Self {
-        Self { color, kind: CardKind::Normal(NormalCardKind::Block) }
+        Self {
+            color,
+            kind: CardKind::Normal(NormalCardKind::Block),
+        }
     }
     pub fn plus_four() -> Self {
-        Self { color: Color::None, kind: CardKind::Special(SpecialCardKind::PlusFour) }
+        Self {
+            color: Color::None,
+            kind: CardKind::Special(SpecialCardKind::PlusFour),
+        }
     }
     pub fn change_color() -> Self {
-        Self { color: Color::None, kind: CardKind::Special(SpecialCardKind::ChangeColor) }
+        Self {
+            color: Color::None,
+            kind: CardKind::Special(SpecialCardKind::ChangeColor),
+        }
     }
 }

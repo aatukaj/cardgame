@@ -1,6 +1,6 @@
 import { useNavigate } from "react-router-dom";
 import UICard from "../components/UICard";
-import { User } from "@bindings/User";
+import { UserCreate } from "@bindings/UserCreate";
 import { useEffect, useState } from "react";
 import Avatar from "../components/Avatar";
 
@@ -23,10 +23,10 @@ export default function LoginPage() {
     function onSubmit(event: React.FormEvent<HTMLFormElement>, eyeColorIndex: number, tieColorIndex: number, eyeIndex: number, tieIndex: number) {
         event.preventDefault();
         const formData = new FormData(event.currentTarget);
-        Login({ name: formData.get("name") as string, eyeColorIndex, tieColorIndex, eyeIndex, tieIndex })
+        Login({ name: formData.get("name") as string, avatar: { eyeColorIndex, tieColorIndex, eyeIndex, tieIndex } })
     }
 
-    async function Login(data: User) {
+    async function Login(data: UserCreate) {
         const response = await fetch("/api/user/login", {
             method: "POST", headers: {
                 credentials: 'include',
@@ -47,7 +47,7 @@ export default function LoginPage() {
             }
         }
         fetch_whoami()
-
+        randomize()
     }, [navigate])
 
     function incr(i: number, len: number): number {
@@ -87,8 +87,7 @@ export default function LoginPage() {
                 </UICard.Footer>
             </form>
         </UICard>
-        <div className="relative">
-            <ColorPalette className="absolute bottom-0" selected={eyeColorIndex} title="Eye" onClick={setEyeColorIndex} />
+        <div className="relative"> <ColorPalette className="absolute bottom-0" selected={eyeColorIndex} title="Eye" onClick={setEyeColorIndex} />
             <ColorPalette className="absolute top-0 mt-0.5" selected={tieColorIndex} title="Tie" onClick={setTieColorIndex} />
         </div>
     </div>
