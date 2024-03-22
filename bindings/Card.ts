@@ -2,4 +2,4 @@
 import type { CardKind } from "./CardKind";
 import type { Color } from "./Color";
 
-export type Card = { color: Color, kind: CardKind, };
+export type Card = { color: Color, kind: CardKind, id: number, };

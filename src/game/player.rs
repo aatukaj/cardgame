@@ -64,11 +64,11 @@ mod tests {
     #[test]
     fn test_consec() {
         let player = create_player(vec![
-            Card::number(1, Color::Red),
-            Card::number(1, Color::Green),
-            Card::number(1, Color::Yellow),
-            Card::reverse(Color::Blue),
-            Card::number(1, Color::Blue),
+            Card::number(1, Color::Red, 0),
+            Card::number(1, Color::Green, 0),
+            Card::number(1, Color::Yellow, 0),
+            Card::reverse(Color::Blue, 0),
+            Card::number(1, Color::Blue, 0),
         ]);
         let card_indeces = [1, 4, 2, 0];
         let state = State::default();

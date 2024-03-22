@@ -7,6 +7,7 @@ import Avatar from "../components/Avatar";
 import { AVATAR_COLORS, EYES, TIES } from "../assets/avatar";
 import ColorPalette from "../components/ColorPalette";
 import { randInt } from "../util";
+import Button from "../components/Button";
 export default function LoginPage() {
     const navigate = useNavigate();
     const [eyeIndex, setEyeIndex] = useState(0);
@@ -70,9 +71,18 @@ export default function LoginPage() {
                 <UICard.Body>
                     <div className="flex flex-col">
                         <div className="grid grid-cols-3 grid-rows-2">
-                            <button onClick={e => { e.preventDefault(); setEyeIndex(i => incr(i, EYES.length)) }} className="text-xl font-bold justify-self-end m-3">&lt;</button>
-                            <Avatar eyeColorIndex={eyeColorIndex} eyeIndex={eyeIndex} tieColorIndex={tieColorIndex} tieIndex={tieIndex} className="row-span-2 col-start-2 -mx-8 pointer-events-none" />
-                            <button onClick={e => { e.preventDefault(); setEyeIndex(i => decr(i, EYES.length)) }} className="text-xl font-bold justify-self-start m-3">&gt;</button>
+                            <button
+                                onClick={e => { e.preventDefault(); setEyeIndex(i => incr(i, EYES.length)) }}
+                                className="text-xl font-bold justify-self-end m-3">
+                                &lt;
+                            </button>
+                            <Avatar
+                                {...{ eyeColorIndex, eyeIndex, tieColorIndex, tieIndex }}
+                                className="row-span-2 col-start-2 -mx-8 pointer-events-none"
+                            />
+                            <button
+                                onClick={e => { e.preventDefault(); setEyeIndex(i => decr(i, EYES.length)) }}
+                                className="text-xl font-bold justify-self-start m-3">&gt;</button>
                             <button onClick={e => { e.preventDefault(); setTieIndex(i => incr(i, TIES.length)) }} className="text-xl font-bold justify-self-end m-3">&lt;</button>
                             <button onClick={e => { e.preventDefault(); setTieIndex(i => decr(i, TIES.length)) }} className="text-xl font-bold justify-self-start m-3">&gt;</button>
                         </div>
@@ -81,8 +91,10 @@ export default function LoginPage() {
                 </UICard.Body>
                 <UICard.Footer>
                     <div className="flex w-full gap-1 justify-items-stretch h-8">
-                        <button onClick={(e) => { e.preventDefault(); randomize(); }} className="text-xl h-full bg-blue-500 border border-blue-400 text-center">🎲</button>
-                        <input type='submit' value='Continue' className='grow h-full bg-green-500 border  border-green-400' />
+                        <Button variant="blue" onClick={(e) => { e.preventDefault(); randomize(); }} className="text-xl h-full" >
+                            🎲
+                        </Button>
+                        <Button type='submit' variant="green" className='grow h-full'>Continue</Button>
                     </div>
                 </UICard.Footer>
             </form>

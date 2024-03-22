@@ -39,6 +39,7 @@ pub struct GameState<'a> {
     pub top_card: Option<&'a Card>,
     pub self_index: usize,
     pub cards_played: usize,
+    pub last_played_cards: &'a [Card],
 }
 
 #[derive(Clone, Debug, TS, Serialize)]
@@ -48,4 +49,3 @@ pub struct PlayerInfo<'a> {
     pub user: &'a User,
     pub card_count: usize,
 }
-

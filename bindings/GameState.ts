@@ -3,4 +3,4 @@ import type { Card } from "./Card";
 import type { PlayerInfo } from "./PlayerInfo";
 import type { TurnDirection } from "./TurnDirection";
 
-export type GameState = { users: Array<PlayerInfo>, direction: TurnDirection, ownCards: Array<Card>, turnIndex: number, topCard: Card | null, selfIndex: number, cardsPlayed: number, };
+export type GameState = { users: Array<PlayerInfo>, direction: TurnDirection, ownCards: Array<Card>, turnIndex: number, topCard: Card | null, selfIndex: number, cardsPlayed: number, lastPlayedCards: Array<Card>, };

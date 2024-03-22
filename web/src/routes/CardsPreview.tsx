@@ -1,19 +1,7 @@
 import { Card } from "@bindings/Card";
-import CardView, { UnplayedCardView } from "../components/CardView";
-
-import PlayerInfoView from "../components/PlayerInfoView";
-import CardPile from "../components/CardPile";
-import { useEffect, useState } from "react";
-
+import PlayerCarousel from "../components/PlayerCarousel";
+import { PlayerInfo } from "@bindings/PlayerInfo";
 export default function CardsPreview() {
-    const [pileOffset, setPileOffset] = useState(0);
-    useEffect(() => {
-        const interval = setInterval(() => {
-            setPileOffset(i => i + 1)
-        }, 1000);
-        return () => clearInterval(interval);
-    }, []);
-
 
     const cards: Card[] = []
     for (const color of ["Red", "Green", "Yellow", "Blue", "None"] as const) {
@@ -22,7 +10,9 @@ export default function CardsPreview() {
                 color, kind: {
                     tag: "Normal",
                     fields: { tag: "Number", "fields": i }
-                }
+                },
+                id: 0
+
             })
         }
         for (const tag of ["Reverse", "Block", "PlusTwo"] as const) {
@@ -33,7 +23,8 @@ export default function CardsPreview() {
                     fields: {
                         tag,
                     }
-                }
+                },
+                id: 0
             })
         }
         for (const tag of ["PlusFour", "ChangeColor"] as const) {
@@ -42,17 +33,34 @@ export default function CardsPreview() {
                 kind: {
                     tag: "Special",
                     fields: tag
-                }
+                },
+                id: 0
             })
         }
     }
+    const playerInfos: PlayerInfo[] = []
+    for (let i = 0; i < 6; i++) {
+        playerInfos.push({
+            cardCount: 12,
+            user: {
+                id: 0,
+                name: `bob${i}`,
+                avatar: {
+                    tieIndex: 0,
+                    tieColorIndex: 0,
+                    eyeIndex: 0,
+                    eyeColorIndex: 0,
+                }
+            }
+        })
+
+    }
     return (
         <div className="flex flex-row w-full h-full flex-wrap gap-2">
-            {cards.map((c, i) => <CardView card={c} key={i} />)}
-            <PlayerInfoView playerInfo={{ user: { name: "bob", eyeColorIndex: 0, eyeIndex: 0, tieColorIndex: 0, tieIndex: 0 }, cardCount: 12 }} />
-            <PlayerInfoView playerInfo={{ user: { name: "lsob", eyeColorIndex: 0, eyeIndex: 0, tieColorIndex: 0, tieIndex: 0 }, cardCount: 5 }} />
-            <CardPile cards={[cards[0], cards[19], cards[50], cards[3]]} offset={pileOffset} />
-            <UnplayedCardView />
+            {//cards.map((c, i) => <CardView card={c} key={i} />)
+            }
+            <PlayerCarousel playerInfos={playerInfos} selected={1} />
+
         </div>
     )
 

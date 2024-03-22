@@ -43,44 +43,51 @@ pub enum CardKind {
 pub struct Card {
     pub color: Color,
     pub kind: CardKind,
+    pub id: u8,
 }
 
 #[allow(unused)]
 impl Card {
-    pub fn number(num: u8, color: Color) -> Self {
+    pub fn number(num: u8, color: Color, id: u8) -> Self {
         Self {
             color,
             kind: CardKind::Normal(NormalCardKind::Number(num)),
+            id,
         }
     }
-    pub fn reverse(color: Color) -> Self {
+    pub fn reverse(color: Color, id: u8) -> Self {
         Self {
             color,
             kind: CardKind::Normal(NormalCardKind::Reverse),
+            id,
         }
     }
-    pub fn plus_two(color: Color) -> Self {
+    pub fn plus_two(color: Color, id: u8) -> Self {
         Self {
             color,
             kind: CardKind::Normal(NormalCardKind::PlusTwo),
+            id,
         }
     }
-    pub fn block(color: Color) -> Self {
+    pub fn block(color: Color, id: u8) -> Self {
         Self {
             color,
             kind: CardKind::Normal(NormalCardKind::Block),
+            id,
         }
     }
-    pub fn plus_four() -> Self {
+    pub fn plus_four(id: u8) -> Self {
         Self {
             color: Color::None,
             kind: CardKind::Special(SpecialCardKind::PlusFour),
+            id,
         }
     }
-    pub fn change_color() -> Self {
+    pub fn change_color(id: u8) -> Self {
         Self {
             color: Color::None,
             kind: CardKind::Special(SpecialCardKind::ChangeColor),
+            id,
         }
     }
 }

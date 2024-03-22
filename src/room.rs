@@ -8,12 +8,12 @@ use tracing::{error, info};
 use uuid::Uuid;
 
 use crate::{
-    game::{Card, CardKind, Color, Player, State},
+    game::{CardKind, Color, NormalCardKind, Player, State},
     game_messages::{ChatMessage, GameState, PlayerInfo, Response},
     user::User,
     Command, LobbyData, PlayerId, Ser,
 };
-
+pub const MAX_CARD_HISTORY: usize = 8;
 pub struct RoomActor {
     name: String,
     game_started: bool,
@@ -72,6 +72,10 @@ impl RoomActor {
                     self_index: i,
                     direction: game_state.turn_direction,
                     cards_played: self.cards_played,
+                    last_played_cards: &game_state.played_cards[game_state
+                        .played_cards
+                        .len()
+                        .saturating_sub(MAX_CARD_HISTORY)..],
                 })
                 .ser(),
             )
@@ -158,7 +162,7 @@ impl RoomActor {
         {
             let mut card = player.cards.remove(card_index);
             card.color = new_color;
-            game_state.place_card(card);
+            game_state.place_card(card.clone());
             game_state.next_turn(self);
 
             self.cards_played += 1;
@@ -174,7 +178,12 @@ impl RoomActor {
             info!("{} got cards: {:?}", p.user.name, p.cards);
         }
         self.game_started = true;
-        let top_card = game_state.draw_card();
+        let index = game_state
+            .unplayed_cards
+            .iter()
+            .rposition(|card| matches!(card.kind, CardKind::Normal(NormalCardKind::Number(_))))
+            .unwrap();
+        let top_card = game_state.unplayed_cards.remove(index);
         game_state.place_card(top_card);
         self.cards_played = 1;
         self.broadcast_gamestate(game_state).await;
@@ -246,17 +255,19 @@ impl RoomActor {
             return;
         }
         // The player can actually play all the cards in cards_ids
-        for &i in &card_indeces {
-            game_state.place_card(player.cards[i].clone())
+        let new_cards = Vec::with_capacity(player.cards.len() - card_indeces.len());
+        let player_cards = std::mem::replace(&mut player.cards, new_cards);
+
+        for (i, card) in player_cards.into_iter().enumerate() {
+            if card_indeces.contains(&i) {
+                game_state.place_card(card);
+            } else {
+                player.cards.push(card)
+            }
         }
-        let len = card_indeces.len();
-        let mut index = 0;
-        player.cards.retain(|_| {
-            index += 1;
-            !card_indeces.contains(&(index - 1))
-        });
+
         game_state.next_turn(self);
-        self.cards_played += len;
+        self.cards_played += card_indeces.len();
         self.broadcast_gamestate(game_state).await;
     }
 }

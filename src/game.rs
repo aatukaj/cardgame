@@ -125,20 +125,26 @@ impl State {
 impl Default for State {
     fn default() -> Self {
         let mut unplayed_cards: Vec<Card> = Vec::new();
+        let mut id = 0u8;
+        let mut get_id = || {
+            id += 1;
+            id
+        };
         for color in COLORS {
             unplayed_cards.push(Card {
                 color,
                 kind: CardKind::Normal(NormalCardKind::Number(0)),
+                id: get_id(),
             });
             for _ in 0..2 {
                 for i in 1..=9 {
-                    unplayed_cards.push(Card::number(i, color))
+                    unplayed_cards.push(Card::number(i, color, get_id()))
                 }
-                unplayed_cards.push(Card::block(color));
-                unplayed_cards.push(Card::reverse(color));
-                unplayed_cards.push(Card::plus_two(color));
-                unplayed_cards.push(Card::plus_four());
-                unplayed_cards.push(Card::change_color());
+                unplayed_cards.push(Card::block(color, get_id()));
+                unplayed_cards.push(Card::reverse(color, get_id()));
+                unplayed_cards.push(Card::plus_two(color, get_id()));
+                unplayed_cards.push(Card::plus_four(get_id()));
+                unplayed_cards.push(Card::change_color(get_id()));
             }
         }
         Self {
@@ -159,15 +165,15 @@ mod tests {
     fn test_draw_card_unplayed_empty() {
         let mut state = State {
             played_cards: vec![
-                Card::block(Color::Red),
-                Card::block(Color::Blue),
-                Card::block(Color::Yellow),
+                Card::block(Color::Red, 0),
+                Card::block(Color::Blue, 0),
+                Card::block(Color::Yellow, 0),
             ],
             unplayed_cards: vec![],
             ..Default::default()
         };
         let drawn = state.draw_card();
-        assert_eq!(state.played_cards, vec![Card::block(Color::Yellow)]);
+        assert_eq!(state.played_cards, vec![Card::block(Color::Yellow, 0)]);
         assert!(state.unplayed_cards.len() == 1);
         assert!(matches!(drawn.color, Color::Red | Color::Blue))
     }
@@ -176,24 +182,23 @@ mod tests {
     fn test_draw_card_unplayed_non_empty() {
         let mut state = State {
             played_cards: vec![
-                Card::block(Color::Red),
-                Card::block(Color::Blue),
-                Card::block(Color::Yellow),
+                Card::block(Color::Red, 0),
+                Card::block(Color::Blue, 0),
+                Card::block(Color::Yellow, 0),
             ],
-            unplayed_cards: vec![Card::block(Color::Green)],
+            unplayed_cards: vec![Card::block(Color::Green, 0)],
             ..Default::default()
         };
         let drawn = state.draw_card();
         assert_eq!(
             state.played_cards,
             vec![
-                Card::block(Color::Red),
-                Card::block(Color::Blue),
-                Card::block(Color::Yellow)
+                Card::block(Color::Red, 0),
+                Card::block(Color::Blue, 0),
+                Card::block(Color::Yellow, 0)
             ]
         );
         assert!(state.unplayed_cards.is_empty());
-        assert_eq!(drawn, Card::block(Color::Green))
+        assert_eq!(drawn, Card::block(Color::Green, 0))
     }
 }
-
