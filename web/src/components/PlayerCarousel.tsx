@@ -5,7 +5,7 @@ export default function PlayerCarousel({ playerInfos, selected }: { playerInfos:
 
     return (
         <div className='flex flex-row gap-4'>
-            {playerInfos.map((p, i) => <PlayerInfoView playerInfo={p} key={i} />)}
+            {playerInfos.map((p, i) => <PlayerInfoView selected={i == selected} playerInfo={p} key={i} />)}
         </div>
     )
 }

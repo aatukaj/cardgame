@@ -78,7 +78,7 @@ export default function LoginPage() {
                             </button>
                             <Avatar
                                 {...{ eyeColorIndex, eyeIndex, tieColorIndex, tieIndex }}
-                                className="row-span-2 col-start-2 -mx-8 pointer-events-none"
+                                className="row-span-2 col-start-2 -mx-4 pointer-events-none"
                             />
                             <button
                                 onClick={e => { e.preventDefault(); setEyeIndex(i => decr(i, EYES.length)) }}
@@ -91,10 +91,10 @@ export default function LoginPage() {
                 </UICard.Body>
                 <UICard.Footer>
                     <div className="flex w-full gap-1 justify-items-stretch h-8">
-                        <Button variant="blue" onClick={(e) => { e.preventDefault(); randomize(); }} className="text-xl h-full" >
+                        <Button variant="blue" onClick={(e) => { e.preventDefault(); randomize(); }} className="text-xl px-1" >
                             🎲
                         </Button>
-                        <Button type='submit' variant="green" className='grow h-full'>Continue</Button>
+                        <Button type='submit' variant="green" className='grow'>Continue</Button>
                     </div>
                 </UICard.Footer>
             </form>

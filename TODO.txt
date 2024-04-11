@@ -1,15 +1,11 @@
-[ ] SERVER: send error message to websocket when closing / when can't join
 [ ] SERVER: don't allow same user to join game twice
 [ ] SERVER: split session token and actual user id
-[x] SERVER: lobby create name validation
 
 
-[ ] CLIENT:  new card draw button
 [ ] CLIENT: go to /login if response is UNAUTHORIZED then redirect back
-
-
-[x] login and session token, username, cookiesss
-[ ] multiple cards played in one turn
-[x] avatars
+[ ] smaller deck, cards overlapping each other
+[1/2?? ] indicator when you cant play a card
+ 
+[ ] turn direction indicator, self in players, cur player
 [ ] seperate pre-start screen for lobbies, shows current players and empty
 [ ] switch to react router's Form elements

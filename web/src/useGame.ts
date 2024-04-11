@@ -15,13 +15,28 @@ export function plannedPlayToArr(play: PlannedPlay | null, state: State): Card[]
     }
     return []
 }
+
+export function canPlayPlannedPlay(state: State, cardIndex: number): boolean {
+
+    if (state.plannedPlay?.tag === "Special") return false;
+    let toPlay = state.ownCards[cardIndex]
+    if (state.plannedPlay?.cards.includes(cardIndex)) return false;
+    if (state.plannedPlay === null && canPlayCard(state.topCard, toPlay)) {
+        return true;
+    }
+    if (state.plannedPlay === null) return false
+    let topCard = state.ownCards[last(state.plannedPlay.cards)]
+    return (canPlayConsecutiveCard(topCard, toPlay))
+
+}
+
 export function canPlayCard(topCard: Card | null, toPlay: Card): boolean {
     if (topCard === null || toPlay.kind.tag === "Special" || topCard.color === toPlay.color) {
         return true;
     }
     if (topCard.kind.tag !== "Special") {
         if (toPlay.kind.fields.tag !== "Number") return topCard.kind.fields.tag === toPlay.kind.fields.tag;
-        else return topCard.kind.fields.tag === "Number" && topCard.kind.fields.fields === toPlay.kind.fields.fields;
+        return topCard.kind.fields.tag === "Number" && topCard.kind.fields.fields === toPlay.kind.fields.fields;
 
     }
     return false
@@ -69,7 +84,7 @@ function reducer(state: State, action: Action): State {
             const plannedPlayArr = plannedPlayToArr(state.plannedPlay, state);
             return {
                 ...state,
-                cardsPlayed: state.cardsPlayed + 1,
+                cardsPlayed: state.cardsPlayed + plannedPlayArr.length,
                 ownCards: state.ownCards.filter((c) => !plannedPlayArr.some((p) => p.id == c.id)),
                 lastPlayedCards: state.lastPlayedCards.concat(plannedPlayToArr(state.plannedPlay, state)),
                 plannedPlay: null,
@@ -147,11 +162,20 @@ export default function useGame(lobbyId: string) {
     }, [lastJsonMessage]);
 
     function playCards() {
-        switch (state.plannedPlay?.tag) {
-            case "Multiple": { sendJsonMessage<Request>({ tag: "PlayCards", fields: state.plannedPlay.cards }); break }
-            case "Special": { sendJsonMessage<Request>({ tag: "PlaySpecialCard", fields: [state.plannedPlay.card, state.plannedPlay.color] }); break }
+        if (state.plannedPlay !== null) {
+            switch (state.plannedPlay.tag) {
+                case "Multiple": {
+                    sendJsonMessage<Request>({ tag: "PlayCards", fields: state.plannedPlay.cards });
+                    break
+                }
+                case "Special": {
+                    sendJsonMessage<Request>({ tag: "PlaySpecialCard", fields: [state.plannedPlay.card, state.plannedPlay.color] });
+                    break
+                }
+            }
+            dispatch({ type: "confirm_play" })
+
         }
-        dispatch({ type: "confirm_play" })
     }
 
 

@@ -257,15 +257,14 @@ impl RoomActor {
         // The player can actually play all the cards in cards_ids
         let new_cards = Vec::with_capacity(player.cards.len() - card_indeces.len());
         let player_cards = std::mem::replace(&mut player.cards, new_cards);
-
-        for (i, card) in player_cards.into_iter().enumerate() {
-            if card_indeces.contains(&i) {
-                game_state.place_card(card);
-            } else {
-                player.cards.push(card)
-            }
+        for i in &card_indeces {
+            game_state.place_card(player_cards[*i].clone())
         }
-
+        player.cards = player_cards
+            .into_iter()
+            .enumerate()
+            .filter_map(|(i, c)| (!card_indeces.contains(&i)).then(|| c))
+            .collect();
         game_state.next_turn(self);
         self.cards_played += card_indeces.len();
         self.broadcast_gamestate(game_state).await;
